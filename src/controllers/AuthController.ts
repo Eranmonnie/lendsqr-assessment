@@ -5,6 +5,8 @@ import { hashPassword, comparePassword } from '../utils/password';
 import { signToken } from '../utils/jwt';
 import { userService } from '@/services/UserService';
 import { AuthenticatedRequest } from '@/middlewares/authMiddleware';
+import  { adjutorService } from'../services/AdjutorService';
+import { blacklistService } from '../services/BlacklistService';
 
 export class AuthController {
   async register(req: Request, res: Response) {
@@ -17,8 +19,18 @@ export class AuthController {
           message: 'First name, last name, email, and password are required.',
         });
       }
-
-      //cosequently check blacklist first 
+ 
+      // Check if user is blacklisted before proceeding with registration
+      const blacklistResult = await this.isBlacklisted({ email, phone });
+      if (blacklistResult.status) {
+        return res.status(StatusCodes.FORBIDDEN).json({
+          success: false,
+          message: 'Registration denied due to blacklist status.',
+          data: {
+            blacklist: blacklistResult.blacklist,
+          },
+        });
+      }
 
       const existingUser = await userService.findByEmail(email);
       if (existingUser) {
@@ -148,6 +160,32 @@ export class AuthController {
       });
     }
   }
+
+  private async isBlacklisted(data: any): Promise<{ status: boolean; blacklist: any | null }> {
+    try {
+        const { email, phone } = data;
+        //check db for existing blacklist check to avoid redundant API calls
+        const existingCheck = await blacklistService.findByEmail(email);
+        if (existingCheck) {
+         return { status: true, blacklist: existingCheck };
+        } 
+         const karmaResult = await adjutorService.checkKarma(email);
+          if (karmaResult?.data) {
+            // Persist blacklist check result
+          const blacklist =  await blacklistService.create({
+              email,
+              phone,
+              raw_response: JSON.stringify(karmaResult),
+            });
+            return {  status: true, blacklist: blacklist };
+        }
+        return {status:false, blacklist: null};
+      } catch (err) {
+        // If Adjutor API fails, allow registration but log error
+        console.error('Adjutor Karma check failed:', err);
+        return { status: false, blacklist: null };
+      }
+    }
 }
 
 export const authController = new AuthController();
