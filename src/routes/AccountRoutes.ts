@@ -185,7 +185,7 @@ router.post('/withdraw', authenticate, accountsController.withdrawFunds);
  *                 data:
  *                   $ref: '#/components/schemas/Transaction'
  *       400:
- *         description: Invalid PIN, insufficient funds, or receiver wallet inactive
+ *         description: Invalid PIN, insufficient funds, receiver wallet inactive, or self-transfer is not allowed
  */
 router.post('/transfer', authenticate, accountsController.walletToWalletTransfer);
 
@@ -274,13 +274,25 @@ router.post('/bank-enquiry', authenticate, accountsController.bankEnquiry);
  *                   properties:
  *                     id:
  *                       type: string
- *                     balance:
- *                       type: number
- *                       format: decimal
  *                     status:
  *                       type: string
  *                     currency:
  *                       type: string
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         first_name:
+ *                           type: string
+ *                         last_name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         phone:
+ *                           type: string
+ *                         is_active:
+ *                           type: boolean
  *       404:
  *         description: Wallet not found
  */

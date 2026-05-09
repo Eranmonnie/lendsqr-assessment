@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { env } from '../config/env';
+import { logger } from '@/config/logger';
 
 export class AdjutorService {
   private readonly baseUrl: string;
@@ -29,10 +30,9 @@ export class AdjutorService {
       );
       return response.data;
     } catch (error: any) {
-      console.error('Adjutor API error:', error.response?.data || error.message);
+      logger.error('Adjutor API error:', error.response?.data || error.message);
       throw new Error(error.response?.data?.message || 'Adjutor API Error', { cause: error });
     }
   }
 }
-
 export const adjutorService = new AdjutorService();

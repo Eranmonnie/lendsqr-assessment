@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../src/app';
 import { blacklistRepository } from '../src/repositories/BlacklistRepository';
+import { logger } from '../src/config/logger';
 import { createUser } from './helpers/factories';
 import { mockAdjutorBlacklisted, mockAdjutorClean, mockAdjutorFailure } from './mocks/adjutor';
 
@@ -59,7 +60,7 @@ describe('AuthController - Registration', () => {
   });
 
   it('allows registration if Adjutor check fails', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const loggerSpy = jest.spyOn(logger, 'error').mockImplementation(() => logger as any);
     mockAdjutorFailure();
 
     const res = await request(app)
@@ -73,7 +74,7 @@ describe('AuthController - Registration', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(consoleSpy).toHaveBeenCalled();
+    expect(loggerSpy).toHaveBeenCalled();
   });
 
   it('fails registration if email already exists', async () => {

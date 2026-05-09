@@ -96,6 +96,8 @@ The withdraw flow looks up a saved recipient by `account_number`, validates the 
 }
 ```
 
+The transfer endpoint rejects attempts to send money to the same wallet.
+
 ### Bank enquiry
 
 ```json
@@ -113,7 +115,7 @@ The withdraw flow looks up a saved recipient by `account_number`, validates the 
 }
 ```
 
-Response returns wallet `id`, `balance`, `status`, and `currency` to verify the recipient wallet is active before initiating a transfer.
+Response returns wallet `id`, `status`, `currency`, and the owning `user` details to verify the recipient wallet before initiating a transfer.
 
 ### Add recipient
 

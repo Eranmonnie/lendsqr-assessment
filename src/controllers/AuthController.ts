@@ -7,6 +7,7 @@ import { userService } from '../services/UserService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import { adjutorService } from '../services/AdjutorService';
 import { blacklistService } from '../services/BlacklistService';
+import { logger } from '@/config/logger';
 
 export class AuthController {
   async register(req: Request, res: Response) {
@@ -172,7 +173,7 @@ export class AuthController {
   }
 
   private async isBlacklisted(data: any): Promise<{ status: boolean; blacklist: any | null }> {
-    console.log('Checking blacklist status for:', data);
+    logger.info('Checking blacklist status for:', data);
     try {
       const { email, phone } = data;
       //check db for existing blacklist
@@ -181,7 +182,7 @@ export class AuthController {
         return { status: true, blacklist: existingCheck };
       }
       const karmaResult = await adjutorService.checkKarma(email);
-      console.log('Adjutor Karma result:', karmaResult);
+      logger.info('Adjutor Karma result:', karmaResult);
       if (karmaResult?.data) {
         // Persist blacklist check result
         const blacklist = await blacklistService.create({
@@ -191,11 +192,11 @@ export class AuthController {
         });
         return { status: true, blacklist: blacklist };
       }
-      console.log('No blacklist found for:', data);
+      logger.info('No blacklist found for:', data);
       return { status: false, blacklist: null };
     } catch (err) {
       // If Adjutor API fails, allow registration but log error
-      console.error('Adjutor Karma check failed:', err);
+      logger.error('Adjutor Karma check failed:', err);
       return { status: false, blacklist: null };
     }
   }

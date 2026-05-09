@@ -339,7 +339,7 @@ export class AccountsController {
           });
         }
         // Log error for review 
-        console.error("Withdrawal Paystack transfer failed:", paystackError);
+        logger.error("Withdrawal Paystack transfer failed:", paystackError);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
           success: false,
           message:
@@ -466,14 +466,29 @@ export class AccountsController {
         });
       }
 
+      const walletUser = await userService.findById(wallet.user_id);
+      if (!walletUser) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          success: false,
+          message: "Wallet owner not found",
+        });
+      }
+
       return res.status(StatusCodes.OK).json({
         success: true,
         message: "Wallet enquiry successful",
         data: {
           id: wallet.id,
-          balance: wallet.balance,
           status: wallet.status,
           currency: wallet.currency,
+          user: {
+            id: walletUser.id,
+            first_name: walletUser.first_name,
+            last_name: walletUser.last_name,
+            email: walletUser.email,
+            phone: walletUser.phone,
+            is_active: Boolean(walletUser.is_active),
+          },
         },
       });
     } catch (error: any) {
@@ -523,15 +538,13 @@ export class AccountsController {
       );
 
       const account_name = bankEnquiry.data.account_name;
-      console.log('Bank enquiry result for addRecipient:', bankEnquiry);
-
+      // bankEnquiry returned account_name used for creating transfer recipient
       const recipient = await paystackService.createTransferRecipient(
         account_name,
         account_number,
         bank_code,
       );
 
-      //TODO: Save the recipient to the database
       await recipientRepository.create({
         user_id: userId,
         recipient_code: recipient.recipient_code,
@@ -637,6 +650,13 @@ export class AccountsController {
         return res.status(StatusCodes.BAD_REQUEST).json({
           success: false,
           message: "Active wallet not found.",
+        });
+      }
+
+      if (wallet.id === receiver_wallet_id) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "You cannot transfer to yourself.",
         });
       }
 

@@ -182,6 +182,26 @@ describe('AccountsController', () => {
     expect(res.body.message).toMatch(/inactive/i);
   });
 
+  it('fails wallet-to-wallet transfer when sending to the same wallet', async () => {
+    const sender = await createUser({ email: 'sender-self@example.com' });
+    await setUserPin(sender.id as string, '1234');
+    const senderWallet = await createWallet(sender.id as string, { balance: 3000, status: 'ACTIVE' });
+
+    const res = await request(app)
+      .post('/api/accounts/transfer')
+      .set('Authorization', authHeaderForUser(sender.id as string))
+      .send({
+        amount: 300,
+        receiver_wallet_id: senderWallet.id,
+        pin: '1234',
+        idempotency_key: 'transfer-self-001',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/cannot transfer to yourself/i);
+  });
+
   it('retrieves wallet details successfully via wallet enquiry', async () => {
     const user = await createUser({ email: 'enquiry-sender@example.com' });
     const receiver = await createUser({ email: 'enquiry-receiver@example.com' });
@@ -195,7 +215,9 @@ describe('AccountsController', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.id).toBe(receiverWallet.id);
-    expect(res.body.data.balance).toBe(2500);
+    expect(res.body.data.user.id).toBe(receiver.id);
+    expect(res.body.data.user.email).toBe('enquiry-receiver@example.com');
+    expect(res.body.data.user.is_active).toBe(true);
     expect(res.body.data.status).toBe('ACTIVE');
     expect(res.body.data.currency).toBeDefined();
   });

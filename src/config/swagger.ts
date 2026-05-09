@@ -58,7 +58,7 @@ const options = {
           properties: {
             id: { type: 'string', format: 'uuid' },
             wallet_id: { type: 'string', format: 'uuid' },
-            type: { type: 'string', enum: ['FUNDING', 'WITHDRAWAL', 'TRANSFER'] },
+            type: { type: 'string', enum: ['FUND', 'WITHDRAWAL', 'TRANSFER'] },
             amount: { type: 'number', format: 'decimal' },
             status: { type: 'string', enum: ['PENDING', 'SUCCESS', 'FAILED'] },
             reference: { type: 'string' },
