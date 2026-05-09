@@ -25,4 +25,10 @@ export const env = {
   paystack: {
     secretKey: process.env.PAYSTACK_SECRET_KEY || 'sk_test_mock_secret',
   },
+  adjutor: {
+    baseUrl: process.env.ADJUTOR_BASE_URL || 'https://api.adjutor.lendsqr.com',
+    apiKey: process.env.ADJUTOR_API_KEY || 'mock_adjutor_api_key',
+  },
+  host: process.env.HOST || 'localhost',
+  productionUrl: process.env.PRODUCTION_URL || 'https://api.yourdomain.com',
 };

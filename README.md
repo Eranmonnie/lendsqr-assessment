@@ -28,10 +28,15 @@ Demo Credit API is a service, built with Express, TypeScript, Knex, and MySQL as
 
 Base path: `/api`
 
+### Documentation
+
+Interactive API documentation is available at `/api-docs` when the server is running.
+
 ### Auth
 
 - `POST /auth/register`
 - `POST /auth/login`
+- `GET /auth/profile`
 - `POST /auth/logout`
 
 ### Wallets

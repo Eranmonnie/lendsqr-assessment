@@ -1,9 +1,11 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
 import routes from './routes';
 import { logger } from './config/logger';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
+import { swaggerSpec } from './config/swagger';
 
 const app: Application = express();
 
@@ -26,6 +28,9 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: true }));
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
 app.use('/api', routes);

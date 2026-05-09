@@ -152,7 +152,16 @@ export class AuthController {
       return res.status(StatusCodes.OK).json({
         success: true,
         message: 'User profile retrieved successfully',
-        data: user,
+        data: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone: user.phone,
+          is_active: Boolean(user.is_active),
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+        },
       });
     } catch (error: any) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

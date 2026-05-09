@@ -146,3 +146,30 @@ describe('AuthController - Login', () => {
     expect(res.body.success).toBe(false);
   });
 });
+
+describe('AuthController - Profile', () => {
+  it('returns the authenticated user profile', async () => {
+    const user = await createUser({
+      email: 'profile@example.com',
+      password: 'Password123',
+      phone: '08012345678',
+    });
+
+    const res = await request(app)
+      .get('/api/auth/profile')
+      .set('Authorization', `Bearer ${require('../src/utils/jwt').signToken({ userId: user.id as string })}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.email).toBe('profile@example.com');
+    expect(res.body.data.is_active).toBe(true);
+    expect(res.body.data.password_hash).toBeUndefined();
+  });
+
+  it('rejects unauthenticated profile requests', async () => {
+    const res = await request(app).get('/api/auth/profile');
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+  });
+});

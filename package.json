@@ -31,6 +31,8 @@
     "jsonwebtoken": "^9.0.3",
     "knex": "^3.2.10",
     "mysql2": "^3.22.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^9.0.1",
     "winston": "^3.19.0"
   },
@@ -43,6 +45,8 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.6.1",
     "@types/supertest": "^7.2.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",

@@ -1,12 +1,13 @@
 import axios from 'axios';
+import { env } from '../config/env';
 
 export class AdjutorService {
   private readonly baseUrl: string;
   private readonly apiKey: string;
 
   constructor() {
-    this.baseUrl = process.env.ADJUTOR_BASE_URL || '';
-    this.apiKey = process.env.ADJUTOR_API_KEY || '';
+    this.baseUrl = env.adjutor.baseUrl;
+    this.apiKey = env.adjutor.apiKey;
   }
 
   /**
