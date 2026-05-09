@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
 import { paystackService } from '../services/PaystackService';
@@ -10,7 +10,7 @@ import { userRepository } from '@/repositories/UserRepository';
 import { comparePassword } from '@/utils/password';
 import db from '@/database/db';
 import { ledgerRepository } from '@/repositories/LedgerRepository';
-import { recepientRepository } from '@/repositories/RecepientRepository';
+import { recipientRepository } from '@/repositories/RecipientRepository';
 
 export class AccountsController {
 
@@ -249,7 +249,7 @@ export class AccountsController {
       );
 
       //TODO: Save the recipient to the database
-      await recepientRepository.create({
+      await recipientRepository.create({
         user_id: userId,
         recipient_code: recipient.recipient_code,
         account_number: recipient.account_number,
@@ -270,7 +270,7 @@ export class AccountsController {
     }
   }
 
-  async getReciepients(req: AuthenticatedRequest, res: Response) {
+  async getRecipients(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.userId;
       if (!userId) {
@@ -280,11 +280,11 @@ export class AccountsController {
         });
       }
 
-      const recepients = await recepientRepository.findAll({ user_id: userId });
+      const recipients = await recipientRepository.findAllByCondition({ user_id: userId });
       return res.status(StatusCodes.OK).json({
         success: true,
         message: 'Recipients fetched successfully',
-        data: recepients,
+        data: recipients,
       });
     } catch (error: any) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -394,7 +394,7 @@ export class AccountsController {
           amount,
           balance_before: balanceBeforeSender,
           balance_after: balanceAfterSender,
-          reference: `LEDGER-${reference}`,
+          reference: `LEDGER-DEBIT-${reference}`,
         }, trx);
 
         // F. Add to recipient
@@ -411,7 +411,7 @@ export class AccountsController {
           amount,
           balance_before: balanceBeforeRecipient,
           balance_after: balanceAfterRecipient,
-          reference: `LEDGER-${reference}`,
+          reference: `LEDGER-CREDIT-${reference}`,
         }, trx);
       });
 

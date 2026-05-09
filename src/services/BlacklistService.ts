@@ -1,5 +1,4 @@
 import { blacklistRepository } from "@/repositories/BlacklistRepository";
-import { PaystackService } from "./PaystackService";
 
 
 export class BlacklistService {

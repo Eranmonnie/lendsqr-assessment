@@ -12,7 +12,10 @@ export const env = {
     port: parseInt(process.env.DB_PORT || '3306', 10),
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    name: process.env.DB_NAME || 'lendsqr_db',
+    name:
+      process.env.NODE_ENV === 'test'
+        ? process.env.DB_NAME_TEST || process.env.DB_NAME || 'lendsqr_db_test'
+        : process.env.DB_NAME || 'lendsqr_db',
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'super_secret_default_key_change_me',

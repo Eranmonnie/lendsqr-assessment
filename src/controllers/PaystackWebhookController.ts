@@ -1,10 +1,6 @@
 
 import { StatusCodes } from "http-status-codes";
 import { env } from "../config/env";
-import db from "../database/db";
-import { ledgerRepository } from "../repositories/LedgerRepository";
-import { transactionRepository } from "../repositories/TransactionRepository";
-import { walletRepository } from "../repositories/WalletRepository";
 import { Request, Response } from "express";
 import * as crypto from "crypto";
 import { webhookService } from "@/services/WebhookService";

@@ -7,10 +7,8 @@ const router = Router();
 // Protect the initialization route
 router.post('/fund', authenticate, accountsController.fundWallet);
 router.post('/withdraw', authenticate, accountsController.withdrawFunds);
+router.post('/transfer', authenticate, accountsController.walletToWalletTransfer);
 router.post('/add-recipient', authenticate, accountsController.addRecipient);
-router.get('/recipients', authenticate, accountsController.getReciepients);
-
-//TODO walle to wallet transfer
-
+router.get('/recipients', authenticate, accountsController.getRecipients);
 
 export default router;

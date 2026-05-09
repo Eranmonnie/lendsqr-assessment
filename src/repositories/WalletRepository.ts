@@ -21,6 +21,10 @@ export class WalletRepository extends BaseRepository<Wallet> {
   }
 
   async lockById(id: string, trx: Knex.Transaction): Promise<Wallet | undefined> {
+    const clientName = trx.client.config.client;
+    if (clientName === 'sqlite3') {
+      return this.getQuery(trx).where({ id }).first();
+    }
     return this.getQuery(trx).where({ id }).forUpdate().first();
   }
 

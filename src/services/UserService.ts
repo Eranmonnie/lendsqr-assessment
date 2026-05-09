@@ -6,7 +6,7 @@ export class UserService {
         return await userRepository.findByEmail(email);
     }
 
-    async crteateUser(body: Partial<User>) {
+    async createUser(body: Partial<User>) {
         return await userRepository.create(body);
     }
 

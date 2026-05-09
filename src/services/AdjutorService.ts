@@ -31,7 +31,7 @@ export class AdjutorService {
       // Log error for debugging
       console.error('Adjutor API error:', error.response?.data || error.message);
       // Throw a standard error
-      throw new Error(error.response?.data?.message || 'Adjutor API Error');
+      throw new Error(error.response?.data?.message || 'Adjutor API Error', { cause: error });
     }
   }
 }

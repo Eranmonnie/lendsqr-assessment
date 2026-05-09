@@ -42,6 +42,22 @@ const config: { [key: string]: Knex.Config } = {
       directory: './src/database/migrations',
     },
   },
+  
+  test: {
+    client: 'sqlite3',
+    connection: {
+      filename: ':memory:',
+    },
+    useNullAsDefault: true,
+    pool: {
+      min: 1,
+      max: 1,
+    },
+    migrations: {
+      tableName: 'knex_migrations',
+      directory: './src/database/migrations',
+    },
+  },
 };
 
 export default config;

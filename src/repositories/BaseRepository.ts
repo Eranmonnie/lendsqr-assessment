@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { randomUUID } from 'crypto';
 import db from '../database/db';
 
 export abstract class BaseRepository<T extends Record<string, any>> {
@@ -32,8 +33,14 @@ export abstract class BaseRepository<T extends Record<string, any>> {
 
   async create(data: Partial<T>, trx?: Knex.Transaction): Promise<T> {
     const query = this.getQuery(trx);
-    const [id] = await query.insert(data as any);
-    const createdRecord = await this.findById(id as number, trx);
+    const payload = { ...data } as Record<string, any>;
+    if (!payload.id) {
+      payload.id = randomUUID();
+    }
+
+    const inserted = await query.insert(payload as any);
+    const id = payload.id ?? (Array.isArray(inserted) ? inserted[0] : inserted);
+    const createdRecord = await this.findById(id as string | number, trx);
     if (!createdRecord) {
       throw new Error('Failed to create record');
     }
@@ -55,6 +62,6 @@ export abstract class BaseRepository<T extends Record<string, any>> {
     if (!record) {
       return undefined;
     }
-    return this.update(record.id as number, data, trx);
+    return this.update(record.id as string | number, data, trx);
   }
 }

@@ -42,7 +42,7 @@ export class AuthController {
 
       const password_hash = await hashPassword(password);
 
-      const user = await userService.crteateUser({
+      const user = await userService.createUser({
         first_name,
         last_name,
         email,
@@ -101,7 +101,7 @@ export class AuthController {
         });
       }
 
-      if (user.is_active === false) {
+      if (!user.is_active) {
         return res.status(StatusCodes.FORBIDDEN).json({
           success: false,
           message: 'Account is deactivated',
