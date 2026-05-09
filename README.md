@@ -46,6 +46,7 @@ Base path: `/api`
 - `POST /accounts/withdraw` - withdraw to a bank account
 - `POST /accounts/transfer` - wallet-to-wallet transfer
 - `POST /accounts/bank-enquiry` - resolve bank account name
+- `POST /accounts/wallet-enquiry` - verify recipient wallet exists and is active
 - `POST /accounts/add-recipient` - save a recipient after bank enquiry
 - `GET /accounts/recipients` - list saved recipients
 
@@ -98,6 +99,16 @@ The withdraw flow looks up a saved recipient by `account_number`, validates the 
 	"bank_code": "058"
 }
 ```
+
+### Wallet enquiry
+
+```json
+{
+	"receiver_wallet_id": "wallet-uuid"
+}
+```
+
+Response returns wallet `id`, `balance`, `status`, and `currency` to verify the recipient wallet is active before initiating a transfer.
 
 ### Add recipient
 

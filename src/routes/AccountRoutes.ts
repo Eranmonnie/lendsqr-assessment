@@ -12,6 +12,7 @@ router.post('/fund', authenticate, accountsController.fundWallet);
 router.post('/withdraw', authenticate, accountsController.withdrawFunds);
 router.post('/transfer', authenticate, accountsController.walletToWalletTransfer);
 router.post('/bank-enquiry', authenticate, accountsController.bankEnquiry);
+router.post('/wallet-enquiry', authenticate, accountsController.walletEnquiry);
 router.post('/add-recipient', authenticate, accountsController.addRecipient);
 router.get('/recipients', authenticate, accountsController.getRecipients);
 

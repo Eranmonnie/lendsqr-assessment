@@ -440,6 +440,50 @@ export class AccountsController {
     }
   }
 
+  async walletEnquiry(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { receiver_wallet_id } = req.body;
+
+      if (!receiver_wallet_id) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "receiver_wallet_id is required",
+        });
+      }
+
+      const wallet = await walletRepository.findById(receiver_wallet_id);
+      if (!wallet) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          success: false,
+          message: "Wallet not found",
+        });
+      }
+
+      if (wallet.status !== "ACTIVE") {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Wallet is not active",
+        });
+      }
+
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Wallet enquiry successful",
+        data: {
+          id: wallet.id,
+          balance: wallet.balance,
+          status: wallet.status,
+          currency: wallet.currency,
+        },
+      });
+    } catch (error: any) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || "Failed to retrieve wallet details",
+      });
+    }
+  }
+
   async addRecipient(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.userId;

@@ -181,4 +181,64 @@ describe('AccountsController', () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/inactive/i);
   });
+
+  it('retrieves wallet details successfully via wallet enquiry', async () => {
+    const user = await createUser({ email: 'enquiry-sender@example.com' });
+    const receiver = await createUser({ email: 'enquiry-receiver@example.com' });
+    const receiverWallet = await createWallet(receiver.id as string, { balance: 2500, status: 'ACTIVE' });
+
+    const res = await request(app)
+      .post('/api/accounts/wallet-enquiry')
+      .set('Authorization', authHeaderForUser(user.id as string))
+      .send({ receiver_wallet_id: receiverWallet.id });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.id).toBe(receiverWallet.id);
+    expect(res.body.data.balance).toBe(2500);
+    expect(res.body.data.status).toBe('ACTIVE');
+    expect(res.body.data.currency).toBeDefined();
+  });
+
+  it('fails wallet enquiry for non-existent wallet', async () => {
+    const user = await createUser({ email: 'enquiry-notfound@example.com' });
+    const fakeWalletId = require('crypto').randomUUID();
+
+    const res = await request(app)
+      .post('/api/accounts/wallet-enquiry')
+      .set('Authorization', authHeaderForUser(user.id as string))
+      .send({ receiver_wallet_id: fakeWalletId });
+
+    expect(res.status).toBe(404);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/wallet not found/i);
+  });
+
+  it('fails wallet enquiry for inactive wallet', async () => {
+    const user = await createUser({ email: 'enquiry-inactive@example.com' });
+    const receiver = await createUser({ email: 'enquiry-frozen@example.com' });
+    const receiverWallet = await createWallet(receiver.id as string, { balance: 1000, status: 'FROZEN' });
+
+    const res = await request(app)
+      .post('/api/accounts/wallet-enquiry')
+      .set('Authorization', authHeaderForUser(user.id as string))
+      .send({ receiver_wallet_id: receiverWallet.id });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/not active/i);
+  });
+
+  it('fails wallet enquiry with missing receiver_wallet_id', async () => {
+    const user = await createUser({ email: 'enquiry-missing@example.com' });
+
+    const res = await request(app)
+      .post('/api/accounts/wallet-enquiry')
+      .set('Authorization', authHeaderForUser(user.id as string))
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/required/i);
+  });
 });
