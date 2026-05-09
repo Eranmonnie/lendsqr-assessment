@@ -1,6 +1,6 @@
 # Lendsqr Fintech MVP - Demo Credit
 
-Demo Credit API built with Express, TypeScript, Knex, and MySQL as instructed. It supports user onboarding, wallet operations, bank recipient management, Paystack funding and withdrawals, blacklist checks, and webhook-driven reconciliation.
+Demo Credit API is a service, built with Express, TypeScript, Knex, and MySQL as instructed. It supports user onboarding, wallet operations, bank recipient management, Paystack funding and withdrawals, blacklist checks, and webhook-driven reconciliation.
 
 ## Stack
 
@@ -122,7 +122,17 @@ Core tables:
 - `recipients`
 - `webhooks`
 
-Notes:
+## ERD
+
+Source diagram: [SVG version](landsqr-assessment.svg)
+
+<img src="landsqr-assessment.svg" width="700" />
+
+## Database Design
+
+The model is wallet-centric. Each `user` owns one `wallet`, and a wallet can participate in many `transactions` as either the sender or receiver. `ledger_entries` act as the audit trail for every balance change, while `recipients` store saved bank beneficiaries after a successful bank enquiry. `blacklist_checks` retain the Adjutor lookup result used during onboarding, and `webhooks` record Paystack events for reconciliation. Transaction metadata lives in `transactions.meta` so Paystack response details such as the authorization URL can be preserved for retries and verification.
+
+## Notes:
 
 - Monetary values use `DECIMAL(18,2)`.
 - Wallet balance changes are wrapped in database transactions.
