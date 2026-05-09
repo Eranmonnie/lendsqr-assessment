@@ -1,10 +1,12 @@
 import { Router } from 'express';
-import { StatusCodes } from 'http-status-codes';
+import authRoutes from './AuthRoutes';
+import walletRoutes from './WalletRoutes';
+import accountRoutes from './AccountRoutes';
 
 const router = Router();
 
-router.get('/health', (req, res) => {
-  res.status(StatusCodes.OK).json({ success: true, message: 'Server is healthy' });
-});
+router.use('/auth', authRoutes);
+router.use('/wallets', walletRoutes);
+router.use('/accounts', accountRoutes);
 
 export default router;
