@@ -11,6 +11,12 @@ export class PaystackService {
     };
   }
 
+  private buildQueryParams(params: Record<string, unknown>) {
+    return Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
+    );
+  }
+
   /**
    * Initializes a transaction to fund a wallet
    * Amount should be in kobo (NGN * 100)
@@ -70,6 +76,74 @@ export class PaystackService {
   }
 
   /**
+   * Get list of banks with their codes
+   */
+  async getBanks(options: {
+    country?: string;
+    perPage?: number;
+    pageNumber?: number;
+    useCursor?: boolean;
+    payWithBankTransfer?: boolean;
+    payWithBank?: boolean;
+    enabledForVerification?: boolean;
+    next?: string;
+    previous?: string;
+    gateway?: string;
+    type?: string;
+    currency?: string;
+    includeNipSortCode?: boolean;
+  } = {}) {
+    try {
+      const response = await axios.get(
+        `${PAYSTACK_BASE_URL}/bank`,
+        {
+          params: this.buildQueryParams({
+            country: options.country ?? 'nigeria',
+            perPage: options.perPage ?? 50,
+            page: options.pageNumber ?? 1,
+            use_cursor: options.useCursor,
+            pay_with_bank_transfer: options.payWithBankTransfer,
+            pay_with_bank: options.payWithBank,
+            enabled_for_verification: options.enabledForVerification,
+            next: options.next,
+            previous: options.previous,
+            gateway: options.gateway,
+            type: options.type,
+            currency: options.currency,
+            include_nip_sort_code: options.includeNipSortCode,
+          }),
+          headers: this.headers,
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw new Error(`Paystack Get Banks Error: ${error.response?.data?.message || error.message}`, { cause: error });
+    }
+  }
+
+  /**
+   * Resolve account name from account number and bank code
+   * Used for bank enquiry before adding a recipient
+   */
+  async resolveAccountNumber(accountNumber: string, bankCode: string) {
+    try {
+      const response = await axios.get(
+        `${PAYSTACK_BASE_URL}/bank/resolve`,
+        {
+          params: {
+            account_number: accountNumber,
+            bank_code: bankCode,
+          },
+          headers: this.headers,
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw new Error(`Paystack Bank Resolve Error: ${error.response?.data?.message || error.message}`, { cause: error });
+    }
+  }
+
+  /**
    * Initiate a transfer (Withdrawal)
    * Amount should be in NGN, we convert to kobo here
    */
@@ -79,7 +153,7 @@ export class PaystackService {
         `${PAYSTACK_BASE_URL}/transfer`,
         {
           source: 'balance',
-          amount: Math.round(amount * 100), // convert to kobo
+          amount: Math.round(amount * 100),
           recipient: recipientCode,
           reason,
           reference,

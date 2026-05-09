@@ -3,9 +3,9 @@ import { StatusCodes } from "http-status-codes";
 import { env } from "../config/env";
 import { Request, Response } from "express";
 import * as crypto from "crypto";
-import { webhookService } from "@/services/WebhookService";
-import { logger } from "@/config/logger";
-import { webhookRepository } from "@/repositories/WebhookRepository";
+import { webhookService } from "../services/WebhookService";
+import { logger } from "../config/logger";
+import { webhookRepository } from "../repositories/WebhookRepository";
 
 export class PaystackWebhookController {
 
@@ -16,7 +16,7 @@ export class PaystackWebhookController {
         try {
             const payload = (req as any).rawBody || JSON.stringify(req.body);
 
-            // 1. Verify the signature
+            // Verify the signature
             const hash = crypto
                 .createHmac('sha512', env.paystack.secretKey)
                 .update(payload)
@@ -48,20 +48,21 @@ export class PaystackWebhookController {
 
             const event = req.body;
 
-            // 2. We only care about successful charges for funding
             if (event.event === 'charge.success') {
+                logger.info('Handling charge.success event for reference:', { reference: event.data.reference });
                 await webhookService.handlePaystackChargeSuccess(event);
             }
 
             if (event.event === 'transfer.success') {
+                logger.info('Handling transfer.success event for reference:', { reference: event.data.reference });
                 await webhookService.handlePaystackTransferSuccess(event);
             }
 
             if (event.event === 'transfer.failed') {
+                logger.info('Handling transfer.failed event for reference:', { reference: event.data.reference });
                 await webhookService.handlePaystackTransferFailed(event);
             }
 
-            // 5. Always return 200 OK to Paystack
             return res.sendStatus(StatusCodes.OK);
         } catch (error: any) {
             logger.error('Webhook error:', error);

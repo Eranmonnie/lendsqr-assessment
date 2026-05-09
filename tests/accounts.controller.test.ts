@@ -22,7 +22,7 @@ describe('AccountsController', () => {
     const res = await request(app)
       .post('/api/accounts/fund')
       .set('Authorization', authHeaderForUser(user.id as string))
-      .send({ amount: 5000 });
+      .send({ amount: 5000, idempotency_key: 'fund-success-001' });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -37,7 +37,7 @@ describe('AccountsController', () => {
     const res = await request(app)
       .post('/api/accounts/fund')
       .set('Authorization', authHeaderForUser(user.id as string))
-      .send({ amount: 3000 });
+      .send({ amount: 3000, idempotency_key: 'fund-fail-001' });
 
     expect(res.status).toBe(500);
     const transaction = await db('transactions').first('*');
@@ -51,10 +51,23 @@ describe('AccountsController', () => {
     await createWallet(user.id as string, { balance: 10000 });
     mockPaystackTransferSuccess();
 
+    // Create a recipient for the user
+    await db('recipients').insert({
+      id: require('crypto').randomUUID(),
+      user_id: user.id,
+      account_number: '0123456789',
+      bank_code: '058',
+      account_name: 'Test Account',
+      recipient_code: 'RCP_test_1',
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    mockPaystackTransferSuccess();
+
     const res = await request(app)
       .post('/api/accounts/withdraw')
       .set('Authorization', authHeaderForUser(user.id as string))
-      .send({ amount: 2000, pin: '1234', recipient_code: 'RCP_test_1' });
+      .send({ amount: 2000, pin: '1234', account_number: '0123456789', idempotency_key: 'withdraw-ok-001' });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -65,10 +78,22 @@ describe('AccountsController', () => {
     await setUserPin(user.id as string, '1234');
     await createWallet(user.id as string, { balance: 100 });
 
+    // Create a recipient for the user
+    await db('recipients').insert({
+      id: require('crypto').randomUUID(),
+      user_id: user.id,
+      account_number: '9876543210',
+      bank_code: '058',
+      account_name: 'Test Account',
+      recipient_code: 'RCP_test_2',
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+
     const res = await request(app)
       .post('/api/accounts/withdraw')
       .set('Authorization', authHeaderForUser(user.id as string))
-      .send({ amount: 500, pin: '1234', recipient_code: 'RCP_test_2' });
+      .send({ amount: 500, pin: '1234', account_number: '9876543210', idempotency_key: 'withdraw-insufficient-001' });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/insufficient funds/i);
@@ -78,12 +103,23 @@ describe('AccountsController', () => {
     const user = await createUser({ email: 'withdraw-reverse@example.com' });
     await setUserPin(user.id as string, '1234');
     const wallet = await createWallet(user.id as string, { balance: 10000 });
+    // Create a recipient for the user
+    await db('recipients').insert({
+      id: require('crypto').randomUUID(),
+      user_id: user.id,
+      account_number: '5555555555',
+      bank_code: '058',
+      account_name: 'Test Account',
+      recipient_code: 'RCP_test_3',
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
     mockPaystackTransferFailure('transfer downstream failure');
 
     const res = await request(app)
       .post('/api/accounts/withdraw')
       .set('Authorization', authHeaderForUser(user.id as string))
-      .send({ amount: 2500, pin: '1234', recipient_code: 'RCP_test_3' });
+      .send({ amount: 2500, pin: '1234', account_number: '5555555555', idempotency_key: 'withdraw-reverse-001' });
 
     expect(res.status).toBe(500);
     const updatedWallet = await db('wallets').where({ id: wallet.id }).first('*');
@@ -105,7 +141,7 @@ describe('AccountsController', () => {
     const res = await request(app)
       .post('/api/accounts/transfer')
       .set('Authorization', authHeaderForUser(sender.id as string))
-      .send({ amount: 1500, receiver_wallet_id: receiverWallet.id, pin: '1234' });
+      .send({ amount: 1500, receiver_wallet_id: receiverWallet.id, pin: '1234', idempotency_key: 'transfer-success-001' });
 
     expect(res.status).toBe(200);
     const senderRow = await db('wallets').where({ id: senderWallet.id }).first('*');
@@ -124,7 +160,7 @@ describe('AccountsController', () => {
     const res = await request(app)
       .post('/api/accounts/transfer')
       .set('Authorization', authHeaderForUser(sender.id as string))
-      .send({ amount: 500, receiver_wallet_id: receiverWallet.id, pin: '1234' });
+      .send({ amount: 500, receiver_wallet_id: receiverWallet.id, pin: '1234', idempotency_key: 'transfer-insufficient-001' });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/insufficient funds/i);
@@ -140,7 +176,7 @@ describe('AccountsController', () => {
     const res = await request(app)
       .post('/api/accounts/transfer')
       .set('Authorization', authHeaderForUser(sender.id as string))
-      .send({ amount: 300, receiver_wallet_id: receiverWallet.id, pin: '1234' });
+      .send({ amount: 300, receiver_wallet_id: receiverWallet.id, pin: '1234', idempotency_key: 'transfer-inactive-001' });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/inactive/i);

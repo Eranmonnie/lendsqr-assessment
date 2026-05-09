@@ -3,9 +3,9 @@ import { StatusCodes } from 'http-status-codes';
 import { userRepository } from '../repositories/UserRepository';
 import { hashPassword, comparePassword } from '../utils/password';
 import { signToken } from '../utils/jwt';
-import { userService } from '@/services/UserService';
-import { AuthenticatedRequest } from '@/middlewares/authMiddleware';
-import  { adjutorService } from'../services/AdjutorService';
+import { userService } from '../services/UserService';
+import { AuthenticatedRequest } from '../middlewares/authMiddleware';
+import { adjutorService } from '../services/AdjutorService';
 import { blacklistService } from '../services/BlacklistService';
 
 export class AuthController {
@@ -19,7 +19,7 @@ export class AuthController {
           message: 'First name, last name, email, and password are required.',
         });
       }
- 
+
       // Check if user is blacklisted before proceeding with registration
       const blacklistResult = await this.isBlacklisted({ email, phone });
       if (blacklistResult.status) {
@@ -132,6 +132,7 @@ export class AuthController {
   }
 
   async logout(req: Request, res: Response) {
+    // faux logout
     return res.status(StatusCodes.OK).json({
       success: true,
       message: 'Logged out successfully',
@@ -162,30 +163,33 @@ export class AuthController {
   }
 
   private async isBlacklisted(data: any): Promise<{ status: boolean; blacklist: any | null }> {
+    console.log('Checking blacklist status for:', data);
     try {
-        const { email, phone } = data;
-        //check db for existing blacklist check to avoid redundant API calls
-        const existingCheck = await blacklistService.findByEmail(email);
-        if (existingCheck) {
-         return { status: true, blacklist: existingCheck };
-        } 
-         const karmaResult = await adjutorService.checkKarma(email);
-          if (karmaResult?.data) {
-            // Persist blacklist check result
-          const blacklist =  await blacklistService.create({
-              email,
-              phone,
-              raw_response: JSON.stringify(karmaResult),
-            });
-            return {  status: true, blacklist: blacklist };
-        }
-        return {status:false, blacklist: null};
-      } catch (err) {
-        // If Adjutor API fails, allow registration but log error
-        console.error('Adjutor Karma check failed:', err);
-        return { status: false, blacklist: null };
+      const { email, phone } = data;
+      //check db for existing blacklist
+      const existingCheck = await blacklistService.findByEmail(email);
+      if (existingCheck) {
+        return { status: true, blacklist: existingCheck };
       }
+      const karmaResult = await adjutorService.checkKarma(email);
+      console.log('Adjutor Karma result:', karmaResult);
+      if (karmaResult?.data) {
+        // Persist blacklist check result
+        const blacklist = await blacklistService.create({
+          email,
+          phone,
+          raw_response: JSON.stringify(karmaResult),
+        });
+        return { status: true, blacklist: blacklist };
+      }
+      console.log('No blacklist found for:', data);
+      return { status: false, blacklist: null };
+    } catch (err) {
+      // If Adjutor API fails, allow registration but log error
+      console.error('Adjutor Karma check failed:', err);
+      return { status: false, blacklist: null };
     }
+  }
 }
 
 export const authController = new AuthController();

@@ -28,7 +28,7 @@ export class WalletRepository extends BaseRepository<Wallet> {
     return this.getQuery(trx).where({ id }).forUpdate().first();
   }
 
-  // Atomically increment a balance using Knex's raw queries or increment function
+  // Atomically increment a balance
   async incrementBalance(id: string, amount: number, trx?: Knex.Transaction): Promise<void> {
     await this.getQuery(trx)
       .where({ id })

@@ -12,9 +12,9 @@
     "test:coverage": "cross-env NODE_ENV=test jest --coverage --runInBand",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write \"src/**/*.ts\"",
-    "migrate": "knex migrate:latest",
-    "migrate:make": "knex migrate:make",
-    "seed:run": "knex seed:run"
+    "migrate": "knex --knexfile knexfile.ts migrate:latest",
+    "migrate:make": "knex --knexfile knexfile.ts migrate:make",
+    "seed:run": "knex --knexfile knexfile.ts seed:run"
   },
   "keywords": [],
   "author": "",

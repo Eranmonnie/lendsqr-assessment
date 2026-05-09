@@ -1,6 +1,6 @@
-import { Knex } from 'knex';
-import { randomUUID } from 'crypto';
-import db from '../database/db';
+import { Knex } from "knex";
+import { randomUUID } from "crypto";
+import db from "../database/db";
 
 export abstract class BaseRepository<T extends Record<string, any>> {
   protected tableName: string;
@@ -16,15 +16,25 @@ export abstract class BaseRepository<T extends Record<string, any>> {
   }
 
   async findAll(trx?: Knex.Transaction): Promise<T[]> {
-    return this.getQuery(trx).select('*') as unknown as Promise<T[]>;
+    return this.getQuery(trx).select("*") as unknown as Promise<T[]>;
   }
 
-  async findById(id: number | string, trx?: Knex.Transaction): Promise<T | undefined> {
-    return this.getQuery(trx).where('id', id).first() as unknown as Promise<T | undefined>;
+  async findById(
+    id: number | string,
+    trx?: Knex.Transaction,
+  ): Promise<T | undefined> {
+    return this.getQuery(trx).where("id", id).first() as unknown as Promise<
+      T | undefined
+    >;
   }
 
-  async findOne(filter: Partial<T>, trx?: Knex.Transaction): Promise<T | undefined> {
-    return this.getQuery(trx).where(filter as any).first() as unknown as Promise<T | undefined>;
+  async findOne(
+    filter: Partial<T>,
+    trx?: Knex.Transaction,
+  ): Promise<T | undefined> {
+    return this.getQuery(trx)
+      .where(filter as any)
+      .first() as unknown as Promise<T | undefined>;
   }
 
   async findMany(filter: Partial<T>, trx?: Knex.Transaction): Promise<T[]> {
@@ -42,26 +52,60 @@ export abstract class BaseRepository<T extends Record<string, any>> {
     const id = payload.id ?? (Array.isArray(inserted) ? inserted[0] : inserted);
     const createdRecord = await this.findById(id as string | number, trx);
     if (!createdRecord) {
-      throw new Error('Failed to create record');
+      throw new Error("Failed to create record");
     }
     return createdRecord;
   }
 
-  async update(id: number | string, data: Partial<T>, trx?: Knex.Transaction): Promise<T | undefined> {
-    await this.getQuery(trx).where('id', id).update(data as any);
+  async update(
+    id: number | string,
+    data: Partial<T>,
+    trx?: Knex.Transaction,
+  ): Promise<T | undefined> {
+    await this.getQuery(trx)
+      .where("id", id)
+      .update(data as any);
     return this.findById(id, trx);
   }
 
   async delete(id: number | string, trx?: Knex.Transaction): Promise<boolean> {
-    const deletedRows = await this.getQuery(trx).where('id', id).del();
+    const deletedRows = await this.getQuery(trx).where("id", id).del();
     return deletedRows > 0;
   }
 
-  async findAndUpdate(filter: Partial<T>, data: Partial<T>, trx?: Knex.Transaction): Promise<T | undefined> {
+  async findAndUpdate(
+    filter: Partial<T>,
+    data: Partial<T>,
+    trx?: Knex.Transaction,
+  ): Promise<T | undefined> {
     const record = await this.findOne(filter, trx);
     if (!record) {
       return undefined;
     }
     return this.update(record.id as string | number, data, trx);
+  }
+
+  async createOrGetByCondition(
+    data: Partial<T>,
+    condition?: Partial<T>,
+    trx?: Knex.Transaction,
+  ): Promise<T | undefined> {
+    try {
+      return await this.create(data, trx);
+    } catch (error: any) {
+      // Catch duplicate reference (MySQL error code 1062, or generic duplicate key)
+      if (
+        error.code === "ER_DUP_ENTRY" ||
+        error.errno === 1062 ||
+        error.message?.includes("UNIQUE constraint")
+      ) {
+        const searchCondition = condition || data;
+        const existing = await this.findOne(searchCondition as Partial<T>, trx);
+        if (existing) {
+          return existing;
+        }
+      }
+      throw error;
+    }
   }
 }

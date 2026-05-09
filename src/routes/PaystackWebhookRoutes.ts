@@ -1,4 +1,4 @@
-import { paystackWebhookController } from "@/controllers/PaystackWebhookController";
+import { paystackWebhookController } from "../controllers/PaystackWebhookController";
 import { Router } from "express";
 
 

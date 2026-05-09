@@ -8,6 +8,7 @@ export const env = {
   port: parseInt(process.env.PORT || '3000', 10),
   saltRound: parseInt(process.env.SALT_ROUND || '10', 10),
   db: {
+    url: process.env.DB_URL,
     host: process.env.DB_HOST || '127.0.0.1',
     port: parseInt(process.env.DB_PORT || '3306', 10),
     user: process.env.DB_USER || 'root',
