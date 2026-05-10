@@ -601,7 +601,7 @@ export class AccountsController {
         recipient_code: recipient.recipient_code,
         account_number: recipient.account_number,
         bank_code: bank_code,
-        account_name: recipient.account_name,
+        account_name: account_name,
       });
 
       return res.status(StatusCodes.OK).json({
