@@ -22,6 +22,7 @@ const envSchema = z
     JWT_EXPIRES_IN: z.string().default('1d'),
 
     PAYSTACK_SECRET_KEY: z.string().default('sk_test_mock_secret'),
+    PAYSTACK_MODE: z.enum(['live', 'mock']).optional(),
 
     ADJUTOR_BASE_URL: z.string().url().default('https://api.adjutor.lendsqr.com'),
     ADJUTOR_API_KEY: z.string().default('mock_adjutor_api_key'),
@@ -67,6 +68,10 @@ try {
   throw error;
 }
 
+const resolvedPaystackMode =
+  parsedEnv.PAYSTACK_MODE ??
+  (parsedEnv.NODE_ENV === 'production' ? 'live' : 'mock');
+
 /**
  * Parsed and validated application environment values.
  */
@@ -88,6 +93,7 @@ export const env = {
   },
   paystack: {
     secretKey: parsedEnv.PAYSTACK_SECRET_KEY,
+    mode: resolvedPaystackMode,
   },
   adjutor: {
     baseUrl: parsedEnv.ADJUTOR_BASE_URL,

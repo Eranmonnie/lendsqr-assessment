@@ -11,6 +11,7 @@ import db from "../database/db";
 import { ledgerRepository } from "../repositories/LedgerRepository";
 import { recipientRepository } from "../repositories/RecipientRepository";
 import { logger } from "../config/logger";
+import { env } from "../config/env";
 
 export class AccountsController {
   /**
@@ -299,6 +300,13 @@ export class AccountsController {
           "Wallet Withdrawal",
           idempotency_key,
         );
+
+        if (env.paystack.mode === "mock" && transactionId) {
+          await transactionRepository.update(transactionId, {
+            status: "SUCCESS",
+            description: "Simulated withdrawal transfer completed",
+          });
+        }
 
         return res.status(StatusCodes.OK).json({
           success: true,

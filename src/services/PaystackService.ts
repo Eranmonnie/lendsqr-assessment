@@ -4,6 +4,10 @@ import { env } from '../config/env';
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 
 export class PaystackService {
+  private get isMockMode() {
+    return env.paystack.mode === 'mock';
+  }
+
   private get headers() {
     return {
       Authorization: `Bearer ${env.paystack.secretKey}`,
@@ -76,6 +80,18 @@ export class PaystackService {
    */
   async createTransferRecipient(name: string, accountNumber: string, bankCode: string) {
     try {
+      if (this.isMockMode) {
+        return {
+          recipient_code: `RCP_MOCK_${accountNumber}`,
+          account_number: accountNumber,
+          account_name: name,
+          bank_code: bankCode,
+          currency: 'NGN',
+          type: 'nuban',
+          active: true,
+        };
+      }
+
       const response = await axios.post(
         `${PAYSTACK_BASE_URL}/transferrecipient`,
         {
@@ -87,7 +103,7 @@ export class PaystackService {
         },
         { headers: this.headers }
       );
-      return response.data;
+      return response.data?.data ?? response.data;
     } catch (error: any) {
       throw new Error(`Paystack Recipient Error: ${error.response?.data?.message || error.message}`, { cause: error });
     }
@@ -152,6 +168,18 @@ export class PaystackService {
    */
   async resolveAccountNumber(accountNumber: string, bankCode: string) {
     try {
+      if (this.isMockMode) {
+        return {
+          status: true,
+          message: 'Account number resolved',
+          data: {
+            account_number: accountNumber,
+            account_name: `MOCK ACCOUNT ${accountNumber}`,
+            bank_code: bankCode,
+          },
+        };
+      }
+
       const response = await axios.get(
         `${PAYSTACK_BASE_URL}/bank/resolve`,
         {
@@ -180,6 +208,18 @@ export class PaystackService {
    */
   async initiateTransfer(amount: number, recipientCode: string, reason: string, reference: string) {
     try {
+      if (this.isMockMode) {
+        return {
+          data: {
+            reference,
+            status: 'success',
+            recipient: recipientCode,
+            amount: Math.round(amount * 100),
+            reason,
+          },
+        };
+      }
+
       const response = await axios.post(
         `${PAYSTACK_BASE_URL}/transfer`,
         {
