@@ -599,7 +599,7 @@ export class AccountsController {
       await recipientRepository.create({
         user_id: userId,
         recipient_code: recipient.recipient_code,
-        account_number: recipient.account_number,
+        account_number: account_number,
         bank_code: bank_code,
         account_name: account_name,
       });
