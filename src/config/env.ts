@@ -16,6 +16,7 @@ const envSchema = z
     DB_PASSWORD: z.string().default(''),
     DB_NAME: z.string().default('lendsqr_db'),
     DB_NAME_TEST: z.string().optional(),
+    DB_URL: z.string().optional(),
 
     JWT_SECRET: z.string().default('super_secret_default_key_change_me'),
     JWT_EXPIRES_IN: z.string().default('1d'),
@@ -79,6 +80,7 @@ export const env = {
     user: parsedEnv.DB_USER,
     password: parsedEnv.DB_PASSWORD,
     name: parsedEnv.NODE_ENV === 'test' ? parsedEnv.DB_NAME_TEST || parsedEnv.DB_NAME : parsedEnv.DB_NAME,
+    url: parsedEnv.DB_URL,
   },
   jwt: {
     secret: parsedEnv.JWT_SECRET,
