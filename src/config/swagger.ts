@@ -14,7 +14,7 @@ const options = {
     },
     servers: [
       {
-        url: env.productionUrl,
+        url: `${env.productionUrl}/api`,
         description: 'Production server',
       },
     ],

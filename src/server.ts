@@ -5,8 +5,7 @@ import { logger } from './config/logger';
 const startServer = async () => {
   try {
     const server = app.listen(env.port, () => {
-      logger.info(`Server is running on port ${env.port} Mode: ${env.nodeEnv}`);
-      logger.info(`Swagger docs available at http://${env.host}:${env.port}/api-docs`);
+      logger.info(`Swagger docs available at ${env.productionUrl}/api-docs`);
     });
 
     // Graceful Shutdown
