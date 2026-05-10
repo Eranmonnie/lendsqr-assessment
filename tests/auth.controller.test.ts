@@ -1,7 +1,9 @@
 import request from 'supertest';
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import app from '../src/app';
+import { env } from '../src/config/env';
 import { blacklistRepository } from '../src/repositories/BlacklistRepository';
+import { adjutorService } from '../src/services/AdjutorService';
 import { logger } from '../src/config/logger';
 import { createUser } from './helpers/factories';
 import { mockAdjutorBlacklisted, mockAdjutorClean, mockAdjutorFailure } from './mocks/adjutor';
@@ -9,6 +11,7 @@ import { mockAdjutorBlacklisted, mockAdjutorClean, mockAdjutorFailure } from './
 describe('AuthController - Registration', () => {
   afterEach(() => {
     jest.restoreAllMocks();
+    env.blacklist.mode = 'strict';
   });
 
   it('registers a new user successfully', async () => {
@@ -60,7 +63,8 @@ describe('AuthController - Registration', () => {
     expect(res.body.message).toMatch(/blacklist/i);
   });
 
-  it('allows registration if Adjutor check fails', async () => {
+  it('fails registration in strict mode if Adjutor check fails', async () => {
+    env.blacklist.mode = 'strict';
     const loggerSpy = jest.spyOn(logger, 'error').mockImplementation(() => logger as any);
     mockAdjutorFailure();
 
@@ -73,9 +77,28 @@ describe('AuthController - Registration', () => {
         password: 'Password123',
       });
 
+    expect(res.status).toBe(500);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/blacklist status/i);
+    expect(loggerSpy).toHaveBeenCalled();
+  });
+
+  it('allows registration in disabled mode without calling Adjutor', async () => {
+    env.blacklist.mode = 'disabled';
+    const adjutorSpy = jest.spyOn(adjutorService, 'checkKarma').mockRejectedValue(new Error('Should not be called'));
+
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        first_name: 'Fallback',
+        last_name: 'Allowed',
+        email: 'adjutor-disabled@example.com',
+        password: 'Password123',
+      });
+
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(loggerSpy).toHaveBeenCalled();
+    expect(adjutorSpy).not.toHaveBeenCalled();
   });
 
   it('fails registration if email already exists', async () => {
