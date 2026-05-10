@@ -30,6 +30,7 @@ The system supports user onboarding, wallet management, transaction processing, 
 - Public bank list lookup from Paystack
 - Transaction history with credit/debit classification
 - Request logging with method, URL, status code, and response time
+- Paystack live or mock provider mode for local and restricted environments
 - Paystack webhook handling for `charge.success`, `transfer.success`, and `transfer.failed`
 
 The blacklist verification flow is controlled by `BLACKLIST_MODE`:
@@ -135,6 +136,13 @@ when the server is running.
 # Paystack
 
 - `POST /paystack/webhook`
+
+Paystack behavior is controlled by `PAYSTACK_MODE`:
+
+- `live` uses the real Paystack API
+- `mock` returns simulated responses for funding, bank lookup, recipient creation, and withdrawals
+
+Use `mock` when the Paystack account cannot initiate third-party payouts, or when you want to run the app locally without hitting the external API.
 
 ---
 
@@ -395,12 +403,14 @@ Copy `.env.example` to `.env` and configure:
 - `JWT_SECRET`
 - `JWT_EXPIRES_IN`
 - `PAYSTACK_SECRET_KEY`
+- `PAYSTACK_MODE`
 - `SALT_ROUND`
 - `ADJUTOR_API_KEY`
 - `ADJUTOR_BASE_URL`
 - `BLACKLIST_MODE`
 
 Recommended value for production: `BLACKLIST_MODE=strict`.
+Recommended value for production Paystack usage: `PAYSTACK_MODE=live`.
 
 Environment variables are validated during startup and the application exits early if required values are missing or invalid.
 
@@ -494,24 +504,11 @@ The MVP architecture was intentionally designed to allow future improvements suc
 The API is expected to be deployed using the required assessment format:
 
 ```txt
-https://<candidate-name>-lendsqr-be-test.<cloud-domain>
+https://lendsqr-assessment-8yra.onrender.com
 ```
 
 Swagger documentation should remain accessible at:
 
 ```txt
-/api-docs
+https://lendsqr-assessment-8yra.onrender.com/api-docs/
 ```
-
----
-
-# Submission Notes
-
-Before final submission:
-
-- Add deployment URL
-- Add repository URL
-- Add Loom review video URL
-- Ensure ERD image is included
-- Verify Swagger documentation is accessible
-- Remove all placeholders
