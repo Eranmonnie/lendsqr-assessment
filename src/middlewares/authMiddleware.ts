@@ -6,6 +6,13 @@ export interface AuthenticatedRequest extends Request {
   user?: JwtPayload;
 }
 
+/**
+ * Validates the Bearer token and attaches the decoded user to the request.
+ * @param req AuthenticatedRequest (incoming request)
+ * @param res Response (HTTP response object)
+ * @param next NextFunction (Express next callback)
+ * @returns void
+ */
 export const authenticate = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 

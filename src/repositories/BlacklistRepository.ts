@@ -8,6 +8,9 @@ export interface BlacklistCheck {
   checked_at?: Date;
 }
 
+/**
+ * Repository for persisted blacklist verification checks.
+ */
 export class BlacklistRepository extends BaseRepository<BlacklistCheck> {
   constructor() {
     super('blacklist_checks');

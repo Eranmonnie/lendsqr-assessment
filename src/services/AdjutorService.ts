@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { env } from '../config/env';
-import { logger } from '@/config/logger';
+import { logger } from '../config/logger';
 
 export class AdjutorService {
   private readonly baseUrl: string;

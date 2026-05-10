@@ -66,6 +66,25 @@ const options = {
             created_at: { type: 'string', format: 'date-time' },
           },
         },
+        TransactionWithClassification: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            type: { type: 'string', enum: ['FUND', 'TRANSFER', 'WITHDRAWAL'] },
+            amount: { type: 'number', format: 'decimal' },
+            currency: { type: 'string' },
+            reference: { type: 'string' },
+            status: { type: 'string', enum: ['PENDING', 'SUCCESS', 'FAILED'] },
+            classification: { type: 'string', enum: ['CREDIT', 'DEBIT'] },
+            direction: { type: 'string', enum: ['SENT', 'RECEIVED', 'FUNDED'] },
+            description: { type: 'string' },
+            sender_wallet_id: { type: 'string', format: 'uuid' },
+            receiver_wallet_id: { type: 'string', format: 'uuid' },
+            counterparty: { type: 'object' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
         Error: {
           type: 'object',
           properties: {
@@ -84,4 +103,7 @@ const options = {
   apis: ['./src/routes/*.ts'],
 };
 
+/**
+ * Generated OpenAPI specification used to serve Swagger documentation.
+ */
 export const swaggerSpec = swaggerJsdoc(options);

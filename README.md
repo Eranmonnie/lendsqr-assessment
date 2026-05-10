@@ -1,134 +1,286 @@
-# Lendsqr Fintech MVP - Demo Credit
+# Lendsqr Backend Engineering Assessment — Demo Credit Wallet Service
 
-Demo Credit API is a service, built with Express, TypeScript, Knex, and MySQL as instructed. It supports user onboarding, wallet operations, bank recipient management, Paystack funding and withdrawals, blacklist checks, and webhook-driven reconciliation.
+Demo Credit is an MVP wallet service built for the Lendsqr Backend Engineering Assessment using Express, TypeScript, Knex, MySQL, and Zod validation.
 
-## Stack
+The system supports user onboarding, wallet management, transaction processing, bank recipient management, Paystack-powered funding and withdrawals, blacklist verification, webhook reconciliation, and ledger-backed transaction auditing.
+
+---
+
+# Stack
 
 - Node.js + TypeScript
 - Express.js
 - Knex.js
 - MySQL for runtime data
-- SQLite for test isolation
-- Jest + Supertest for integration tests
+- SQLite for fast, isolated test execution
+- Jest + Supertest for integration testing
+- Zod for runtime environment validation
 
-## Features
+---
+
+# Features
 
 - User registration with Adjutor Karma blacklist checks
-- Token-based authentication for protected routes
+- JWT-based authentication for protected routes
 - Wallet creation and wallet retrieval
 - Wallet funding initialization through Paystack
 - Wallet-to-wallet transfers with atomic balance updates and ledger entries
 - Withdrawal to bank accounts with reversal flow on transfer failure
 - Bank enquiry and recipient creation for saved beneficiaries
 - Public bank list lookup from Paystack
+- Transaction history with credit/debit classification
 - Request logging with method, URL, status code, and response time
 - Paystack webhook handling for `charge.success`, `transfer.success`, and `transfer.failed`
 
-## API Routes
+The blacklist verification flow is controlled by `BLACKLIST_MODE`:
+
+- `strict` rejects onboarding if the Adjutor check cannot be completed
+- `lenient` logs the failure and allows onboarding
+- `disabled` skips the external check entirely
+
+---
+
+# Architecture
+
+The application follows a layered architecture:
+
+- Controllers → HTTP request/response handling
+- Services → business logic and transaction orchestration
+- Repositories → database access abstraction
+- Middleware → authentication, validation, and error handling
+
+This separation improves:
+
+- maintainability
+- testability
+- transaction safety
+- code reuse
+- separation of concerns
+
+---
+
+# API Routes
 
 Base path: `/api`
 
-### Documentation
+## Documentation
 
-Interactive API documentation is available at `/api-docs` when the server is running.
+Interactive API documentation is available at:
 
-### Auth
+```txt
+/api-docs
+```
+
+when the server is running.
+
+---
+
+# Auth
 
 - `POST /auth/register`
 - `POST /auth/login`
 - `GET /auth/profile`
 - `POST /auth/logout`
 
-### Wallets
+---
+
+# Wallets
 
 - `POST /wallets/create`
 - `GET /wallets/my-wallet`
 
-### Accounts
+---
 
-- `GET /accounts/banks` - public bank list lookup
-- `POST /accounts/fund` - initialize wallet funding
-- `POST /accounts/withdraw` - withdraw to a bank account
-- `POST /accounts/transfer` - wallet-to-wallet transfer
-- `POST /accounts/bank-enquiry` - resolve bank account name
-- `POST /accounts/wallet-enquiry` - verify recipient wallet exists and is active
-- `POST /accounts/add-recipient` - save a recipient after bank enquiry
-- `GET /accounts/recipients` - list saved recipients
+# Accounts
 
-### Paystack
+- `GET /accounts/banks`
+  - Public bank list lookup with pagination metadata
+
+- `POST /accounts/fund`
+  - Initialize wallet funding
+
+- `POST /accounts/withdraw`
+  - Withdraw to a bank account
+
+- `POST /accounts/transfer`
+  - Wallet-to-wallet transfer
+
+- `POST /accounts/bank-enquiry`
+  - Resolve bank account name
+
+- `POST /accounts/wallet-enquiry`
+  - Verify recipient wallet exists and is active
+
+- `POST /accounts/add-recipient`
+  - Save a recipient after bank enquiry
+
+- `GET /accounts/recipients`
+  - List saved recipients with pagination
+
+---
+
+# Transactions
+
+- `GET /transactions`
+  - List authenticated user's transactions
+
+- `GET /transactions/:transactionId`
+  - Get a single transaction by id
+
+- `GET /transactions/summary`
+  - Get credit/debit totals and net balance
+
+---
+
+# Paystack
 
 - `POST /paystack/webhook`
 
-## Request Shapes
+---
 
-The money movement endpoints require an `idempotency_key` so retries do not create duplicate transactions.
+# Request Shapes
 
-### Fund wallet
+Money movement endpoints require an `idempotency_key` so retries do not create duplicate transactions.
 
-```json
-{
-	"amount": 5000,
-	"idempotency_key": "fund-001"
-}
-```
+List endpoints return a consistent pagination shape using:
 
-### Withdraw
+- `limit`
+- `offset`
+- `total`
+- `hasMore`
 
-```json
-{
-	"amount": 2000,
-	"pin": "1234",
-	"account_number": "0123456789",
-	"idempotency_key": "withdraw-001"
-}
-```
-
-The withdraw flow looks up a saved recipient by `account_number`, validates the PIN, then sends the transfer through Paystack.
-
-### Wallet transfer
+Example:
 
 ```json
 {
-	"amount": 1500,
-	"receiver_wallet_id": "wallet-uuid",
-	"pin": "1234",
-	"idempotency_key": "transfer-001"
+  "pagination": {
+    "limit": 10,
+    "offset": 0,
+    "total": 5,
+    "hasMore": false
+  }
 }
 ```
 
-The transfer endpoint rejects attempts to send money to the same wallet.
+---
 
-### Bank enquiry
+# Fund Wallet
 
 ```json
 {
-	"account_number": "0123456789",
-	"bank_code": "058"
+  "amount": 5000,
+  "idempotency_key": "fund-001"
 }
 ```
 
-### Wallet enquiry
+---
+
+# Withdraw
 
 ```json
 {
-	"receiver_wallet_id": "wallet-uuid"
+  "amount": 2000,
+  "pin": "1234",
+  "account_number": "0123456789",
+  "idempotency_key": "withdraw-001"
 }
 ```
 
-Response returns wallet `id`, `status`, `currency`, and the owning `user` details to verify the recipient wallet before initiating a transfer.
+The withdrawal flow:
 
-### Add recipient
+1. Resolves a saved recipient
+2. Validates the wallet PIN
+3. Creates transaction and ledger records
+4. Sends the transfer through Paystack
+5. Reverses the transaction on failure
+
+---
+
+# Wallet Transfer
 
 ```json
 {
-	"account_number": "0123456789",
-	"bank_code": "058"
+  "amount": 1500,
+  "receiver_wallet_id": "wallet-uuid",
+  "pin": "1234",
+  "idempotency_key": "transfer-001"
 }
 ```
 
-The `bank_code` should be the Paystack bank code such as `058` or `044`, not the internal bank id returned in bank listings.
+The transfer endpoint rejects attempts to transfer funds to the same wallet.
 
-## Data Model Summary
+---
+
+# Bank Enquiry
+
+```json
+{
+  "account_number": "0123456789",
+  "bank_code": "058"
+}
+```
+
+---
+
+# Wallet Enquiry
+
+```json
+{
+  "receiver_wallet_id": "wallet-uuid"
+}
+```
+
+The response returns:
+
+- wallet id
+- status
+- currency
+- owner information
+
+This allows users to verify recipient wallets before initiating transfers.
+
+---
+
+# Add Recipient
+
+```json
+{
+  "account_number": "0123456789",
+  "bank_code": "058"
+}
+```
+
+The `bank_code` must use the Paystack bank code such as:
+
+- `058`
+- `044`
+
+and not the internal id returned in bank listings.
+
+---
+
+# Transactions
+
+Transaction records are classified from the authenticated user's perspective:
+
+- `CREDIT`
+  - Incoming transfers and successful wallet funding
+
+- `DEBIT`
+  - Outgoing transfers and withdrawals
+
+Supported query parameters for `/transactions`:
+
+```txt
+type=CREDIT|DEBIT|ALL
+status=PENDING|SUCCESS|FAILED
+limit=10
+offset=0
+```
+
+---
+
+# Data Model Summary
 
 Core tables:
 
@@ -140,25 +292,96 @@ Core tables:
 - `recipients`
 - `webhooks`
 
-## ERD
+---
 
-Source diagram: [SVG version](landsqr-assessment.svg)
+# ERD
+
+Source diagram:
+
+```txt
+landsqr-assessment.svg
+```
 
 <img src="landsqr-assessment.svg" width="700" />
 
-## Database Design
+---
 
-The model is wallet-centric. Each `user` owns one `wallet`, and a wallet can participate in many `transactions` as either the sender or receiver. `ledger_entries` act as the audit trail for every balance change, while `recipients` store saved bank beneficiaries after a successful bank enquiry. `blacklist_checks` retain the Adjutor lookup result used during onboarding, and `webhooks` record Paystack events for reconciliation. Transaction metadata lives in `transactions.meta` so Paystack response details such as the authorization URL can be preserved for retries and verification.
+# Database Design
 
-## Notes:
+The model is ledger-centric.
 
-- Monetary values use `DECIMAL(18,2)`.
-- Wallet balance changes are wrapped in database transactions.
-- Ledger rows are append-only and used for auditability.
-- Transaction references are unique and used as idempotency keys.
-- Transaction metadata stores Paystack response details such as the authorization URL.
+Transactions represent business events such as:
 
-## Environment Variables
+- funding
+- transfers
+- withdrawals
+
+Ledger entries represent the actual balance mutations applied to wallets.
+
+Each financial operation generates one or more append-only ledger entries that serve as the immutable audit trail for wallet balance changes.
+
+This separation improves:
+
+- auditability
+- rollback traceability
+- reversal support
+- financial consistency
+- future fee support
+
+Additional entities include:
+
+- `recipients`
+  - Saved bank beneficiaries after successful bank enquiry
+
+- `blacklist_checks`
+  - Adjutor Karma verification records used during onboarding
+
+- `webhooks`
+  - Persisted Paystack webhook events used for reconciliation
+
+Transaction metadata is stored in `transactions.meta` to preserve external provider responses such as authorization URLs and transfer references.
+
+---
+
+# Transaction Atomicity
+
+Critical money movement operations such as:
+
+- funding
+- transfers
+- withdrawals
+
+execute inside database transaction scopes using Knex transactions.
+
+This guarantees:
+
+- atomic debit/credit execution
+- rollback safety
+- balance consistency
+- prevention of partial writes
+
+Critical balance updates also use row locking where necessary to minimize concurrent modification issues.
+
+If any operation fails during execution, all related balance mutations and ledger writes are rolled back.
+
+---
+
+# Design Notes
+
+- Monetary values use `DECIMAL(18,2)`
+- Ledger entries are append-only and immutable
+- Wallet balance changes are wrapped in database transactions
+- Transaction references are unique and used as idempotency keys
+- Request logging is centralized in `src/app.ts`
+- Paystack webhook verification relies on the raw request body
+- Environment variables are validated during startup using Zod
+- Recipient creation is preceded by bank enquiry validation
+- Withdrawal failures trigger reversal ledger entries
+- Pagination responses follow a unified structure
+
+---
+
+# Environment Variables
 
 Copy `.env.example` to `.env` and configure:
 
@@ -175,62 +398,120 @@ Copy `.env.example` to `.env` and configure:
 - `SALT_ROUND`
 - `ADJUTOR_API_KEY`
 - `ADJUTOR_BASE_URL`
+- `BLACKLIST_MODE`
 
-## Local Setup
+Recommended value for production: `BLACKLIST_MODE=strict`.
 
-1. Install dependencies:
+Environment variables are validated during startup and the application exits early if required values are missing or invalid.
+
+---
+
+# Local Setup
+
+## Install Dependencies
 
 ```bash
 npm install
 ```
 
-2. Run migrations:
+## Run Migrations
 
 ```bash
 npm run migrate
 ```
 
-3. Start the server:
+## Start Development Server
 
 ```bash
 npm run dev
 ```
 
-## Scripts
+---
 
-- `npm run dev` - start the server with `nodemon`
-- `npm run build` - compile TypeScript to `dist/`
-- `npm start` - run the compiled server
-- `npm test` - run the test suite in band
-- `npm run test:watch` - run tests in watch mode
-- `npm run test:coverage` - run tests with coverage
-- `npm run lint` - lint source files
-- `npm run format` - format source files
-- `npm run migrate` - apply Knex migrations
-- `npm run migrate:make` - create a new migration
-- `npm run seed:run` - run database seeds
+# Scripts
 
-## Test Setup
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Compile TypeScript |
+| `npm start` | Run compiled server |
+| `npm test` | Run test suite |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Generate coverage report |
+| `npm run lint` | Lint source files |
+| `npm run format` | Format source files |
+| `npm run migrate` | Run Knex migrations |
+| `npm run migrate:make` | Create migration |
+| `npm run seed:run` | Run seeds |
 
-Tests run with `NODE_ENV=test` and use an SQLite database for speed and isolation.
+---
 
-Commands:
+# Test Setup
+
+Tests run using:
+
+```txt
+NODE_ENV=test
+```
+
+SQLite is used during testing for:
+
+- speed
+- isolation
+- deterministic test execution
+
+Run tests:
 
 ```bash
 npm test
-npm run test:watch
+```
+
+Run coverage:
+
+```bash
 npm run test:coverage
 ```
 
-## Design Notes
+---
 
-- Request logging is handled centrally in `src/app.ts` and logs method, URL, status code, and duration.
-- Critical money movement operations use database transactions and row locking.
-- Withdrawal failures reverse the deducted balance and record a `REVERSAL` ledger entry.
-- Recipient creation is preceded by a bank enquiry so the account name is resolved before saving.
-- Paystack webhook handlers rely on the raw request body for signature verification.
+# Scalability Considerations
 
-## Submission Notes TODO
+The MVP architecture was intentionally designed to allow future improvements such as:
 
-- Add your E-R Diagram to this README before final submission.
-- Add deployment URL, repository URL, and review video URL in your submission document.
+- Redis-backed distributed locking
+- Queue-based webhook processing
+- Background retry workers
+- Event-driven ledger processing
+- Read replicas for reporting queries
+- Centralized observability and tracing
+- Advanced fraud detection
+- Rate limiting
+
+---
+
+# Deployment
+
+The API is expected to be deployed using the required assessment format:
+
+```txt
+https://<candidate-name>-lendsqr-be-test.<cloud-domain>
+```
+
+Swagger documentation should remain accessible at:
+
+```txt
+/api-docs
+```
+
+---
+
+# Submission Notes
+
+Before final submission:
+
+- Add deployment URL
+- Add repository URL
+- Add Loom review video URL
+- Ensure ERD image is included
+- Verify Swagger documentation is accessible
+- Remove all placeholders

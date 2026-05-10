@@ -20,6 +20,13 @@ export const errorHandler = (
   });
 };
 
+/**
+ * Returns a 404 response for unmatched routes.
+ * @param req Request (incoming request)
+ * @param res Response (HTTP response object)
+ * @param next NextFunction (Express next callback)
+ * @returns void
+ */
 export const notFoundHandler = (
   req: Request,
   res: Response,

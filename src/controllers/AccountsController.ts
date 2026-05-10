@@ -13,6 +13,13 @@ import { recipientRepository } from "../repositories/RecipientRepository";
 import { logger } from "../config/logger";
 
 export class AccountsController {
+  /**
+   * Initializes wallet funding through Paystack and records a pending transaction.
+   * @param req AuthenticatedRequest (funding payload)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (funding response)
+   * @throws Error if the funding flow fails
+   */
   async fundWallet(req: AuthenticatedRequest, res: Response) {
     const userId = req.user?.userId;
     const { amount, idempotency_key } = req.body;
@@ -128,6 +135,13 @@ export class AccountsController {
     }
   }
 
+  /**
+   * Withdraws funds from the authenticated user's wallet.
+   * @param req AuthenticatedRequest (withdrawal payload)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (withdrawal response)
+   * @throws Error if the withdrawal flow fails
+   */
   async withdrawFunds(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -355,14 +369,26 @@ export class AccountsController {
     }
   }
 
+  /**
+   * Returns a paginated list of banks from Paystack.
+   * @param req AuthenticatedRequest (query parameters)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (banks response)
+   * @throws Error if the external API call fails
+   */
   async getBanks(req: AuthenticatedRequest, res: Response) {
     try {
       const toBoolean = (value: unknown) => value === 'true' || value === true;
 
+      // Normalize pagination parameters
+      const limit = Math.min(Number(req.query.limit) || 50, 100);
+      const offset = Math.max(Number(req.query.offset) || 0, 0);
+      const pageNumber = Math.floor(offset / limit) + 1;
+
       const banks = await paystackService.getBanks({
         country: (req.query.country as string) || 'nigeria',
-        perPage: req.query.perPage ? parseInt(req.query.perPage as string, 10) : 50,
-        pageNumber: req.query.page ? parseInt(req.query.page as string, 10) : 1,
+        perPage: limit,
+        pageNumber: pageNumber,
         useCursor: toBoolean(req.query.use_cursor),
         payWithBankTransfer: toBoolean(req.query.pay_with_bank_transfer),
         payWithBank: toBoolean(req.query.pay_with_bank),
@@ -392,11 +418,15 @@ export class AccountsController {
       return res.status(StatusCodes.OK).json({
         success: true,
         message: "Banks retrieved successfully",
-        data: banksList,
-        meta: {
-          next: banks.meta?.next,
-          previous: banks.meta?.previous,
-          per_page: banks.meta?.per_page,
+        data: {
+          banks: banksList,
+          pagination: {
+            limit,
+            offset,
+            per_page: banks.meta?.per_page,
+            cursor_next: banks.meta?.next,
+            cursor_previous: banks.meta?.previous,
+          },
         },
       });
     } catch (error: any) {
@@ -407,6 +437,13 @@ export class AccountsController {
     }
   }
 
+  /**
+   * Resolves bank account details for a given account number and bank code.
+   * @param req AuthenticatedRequest (bank enquiry payload)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (bank enquiry response)
+   * @throws Error if the account resolution fails
+   */
   async bankEnquiry(req: AuthenticatedRequest, res: Response) {
     try {
       const { account_number, bank_code } = req.body;
@@ -440,6 +477,13 @@ export class AccountsController {
     }
   }
 
+  /**
+   * Looks up a wallet and returns its owner details.
+   * @param req AuthenticatedRequest (wallet enquiry payload)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (wallet enquiry response)
+   * @throws Error if the wallet lookup fails
+   */
   async walletEnquiry(req: AuthenticatedRequest, res: Response) {
     try {
       const { receiver_wallet_id } = req.body;
@@ -499,6 +543,13 @@ export class AccountsController {
     }
   }
 
+  /**
+   * Adds a recipient for the authenticated user.
+   * @param req AuthenticatedRequest (recipient payload)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (recipient response)
+   * @throws Error if recipient creation fails
+   */
   async addRecipient(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -569,6 +620,13 @@ export class AccountsController {
     }
   }
 
+  /**
+   * Returns the authenticated user's saved recipients with pagination.
+   * @param req AuthenticatedRequest (query parameters)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (recipients response)
+   * @throws Error if the recipient lookup fails
+   */
   async getRecipients(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -579,13 +637,33 @@ export class AccountsController {
         });
       }
 
-      const recipients = await recipientRepository.findAllByCondition({
+      const limit = Math.min(Number(req.query.limit) || 10, 100);
+      const offset = Math.max(Number(req.query.offset) || 0, 0);
+
+      // Fetch paginated recipients
+      const recipients = await recipientRepository.findWithPagination(
+        { user_id: userId },
+        limit,
+        offset,
+      );
+
+      // Get total count for pagination
+      const totalCount = await recipientRepository.countByCondition({
         user_id: userId,
       });
+
       return res.status(StatusCodes.OK).json({
         success: true,
         message: "Recipients fetched successfully",
-        data: recipients,
+        data: {
+          recipients,
+          pagination: {
+            limit,
+            offset,
+            total: totalCount,
+            hasMore: offset + recipients.length < totalCount,
+          },
+        },
       });
     } catch (error: any) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -595,6 +673,13 @@ export class AccountsController {
     }
   }
 
+  /**
+   * Transfers funds from the authenticated wallet to another wallet.
+   * @param req AuthenticatedRequest (transfer payload)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (transfer response)
+   * @throws Error if the transfer flow fails
+   */
   async walletToWalletTransfer(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.userId;

@@ -13,6 +13,9 @@ export interface LedgerEntry {
   created_at?: Date;
 }
 
+/**
+ * Repository for wallet ledger entries.
+ */
 export class LedgerRepository extends BaseRepository<LedgerEntry> {
   constructor() {
     super('ledger_entries');

@@ -1,4 +1,5 @@
 import { blacklistService } from '../src/services/BlacklistService';
+import { describe, expect, it } from '@jest/globals';
 
 describe('BlacklistService', () => {
   it('persists and retrieves blacklist checks by email', async () => {

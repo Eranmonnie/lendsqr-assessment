@@ -16,6 +16,17 @@ router.use(authenticate);
  *     description: Create a new wallet for the authenticated user. Each user can have one wallet.
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - pin
+ *             properties:
+ *               pin:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Wallet created successfully

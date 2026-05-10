@@ -10,8 +10,12 @@ import { webhookRepository } from "../repositories/WebhookRepository";
 export class PaystackWebhookController {
 
     /**
-      * Paystack Webhook Handler
-      */
+         * Handles Paystack webhook events and routes them to the correct service flow.
+         * @param req Request (raw webhook payload)
+         * @param res Response (HTTP response object)
+         * @returns Promise<any> (webhook response)
+         * @throws Error if signature verification or event handling fails
+         */
     async paystackWebhook(req: Request, res: Response) {
         try {
             const payload = (req as any).rawBody || JSON.stringify(req.body);

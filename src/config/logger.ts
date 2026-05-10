@@ -7,6 +7,9 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
   return `${timestamp} ${level}: ${stack || message}`;
 });
 
+/**
+ * Application logger configured with environment-aware formatting and transports.
+ */
 export const logger = winston.createLogger({
   level: env.nodeEnv === 'development' ? 'debug' : 'info',
   format: combine(

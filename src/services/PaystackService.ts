@@ -11,6 +11,11 @@ export class PaystackService {
     };
   }
 
+  /**
+   * Removes empty query parameters before sending a Paystack request.
+   * @param params Record<string, unknown> (query parameters)
+   * @returns Record<string, unknown> (filtered query parameters)
+   */
   private buildQueryParams(params: Record<string, unknown>) {
     return Object.fromEntries(
       Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
@@ -20,6 +25,11 @@ export class PaystackService {
   /**
    * Initializes a transaction to fund a wallet
    * Amount should be in kobo (NGN * 100)
+    * @param email string (customer email)
+    * @param amount number (amount in NGN)
+    * @param reference string (transaction reference)
+    * @returns Promise<any> (Paystack initialization response)
+    * @throws Error if the API call fails
    */
   async initializeTransaction(email: string, amount: number, reference: string) {
     try {
@@ -41,6 +51,9 @@ export class PaystackService {
 
   /**
    * Verify a transaction after webhook event or user redirect
+    * @param reference string (transaction reference)
+    * @returns Promise<any> (Paystack verification response)
+    * @throws Error if the API call fails
    */
   async verifyTransaction(reference: string) {
     try {
@@ -55,6 +68,11 @@ export class PaystackService {
 
   /**
    * Create a transfer recipient (required before initiating a withdrawal)
+    * @param name string (recipient name)
+    * @param accountNumber string (bank account number)
+    * @param bankCode string (bank code)
+    * @returns Promise<any> (Paystack recipient response)
+    * @throws Error if the API call fails
    */
   async createTransferRecipient(name: string, accountNumber: string, bankCode: string) {
     try {
@@ -77,6 +95,9 @@ export class PaystackService {
 
   /**
    * Get list of banks with their codes
+    * @param options object (Paystack bank query options)
+    * @returns Promise<any> (Paystack banks response)
+    * @throws Error if the API call fails
    */
   async getBanks(options: {
     country?: string;
@@ -124,6 +145,10 @@ export class PaystackService {
   /**
    * Resolve account name from account number and bank code
    * Used for bank enquiry before adding a recipient
+    * @param accountNumber string (bank account number)
+    * @param bankCode string (bank code)
+    * @returns Promise<any> (Paystack account resolution response)
+    * @throws Error if the API call fails
    */
   async resolveAccountNumber(accountNumber: string, bankCode: string) {
     try {
@@ -146,6 +171,12 @@ export class PaystackService {
   /**
    * Initiate a transfer (Withdrawal)
    * Amount should be in NGN, we convert to kobo here
+    * @param amount number (amount in NGN)
+    * @param recipientCode string (Paystack recipient code)
+    * @param reason string (transfer reason)
+    * @param reference string (transaction reference)
+    * @returns Promise<any> (Paystack transfer response)
+    * @throws Error if the API call fails
    */
   async initiateTransfer(amount: number, recipientCode: string, reason: string, reference: string) {
     try {

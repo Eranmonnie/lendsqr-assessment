@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { randomUUID } from 'crypto';
 import request from 'supertest';
+import { describe, expect, it } from '@jest/globals';
 import app from '../src/app';
 import db from '../src/database/db';
 import { createUser, createWallet } from './helpers/factories';

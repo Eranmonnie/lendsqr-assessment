@@ -14,15 +14,36 @@ const router = Router();
  *     description: Retrieve a paginated list of banks available for withdrawals and recipient setup
  *     parameters:
  *       - in: query
- *         name: page
+ *         name: limit
  *         schema:
  *           type: integer
- *         description: Page number (default 1)
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of banks to return (default 50, max 100)
  *       - in: query
- *         name: per_page
+ *         name: offset
  *         schema:
  *           type: integer
- *         description: Results per page (default 10)
+ *           minimum: 0
+ *         description: Number of banks to skip (for pagination)
+ *       - in: query
+ *         name: country
+ *         schema:
+ *           type: string
+ *         description: Country code (default 'nigeria')
+ *       - in: query
+ *         name: use_cursor
+ *         schema:
+ *           type: boolean
+ *         description: Use cursor-based pagination from Paystack
+ *       - in: query
+ *         name: pay_with_bank_transfer
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: enabled_for_verification
+ *         schema:
+ *           type: boolean
  *     responses:
  *       200:
  *         description: Banks retrieved successfully
@@ -33,17 +54,45 @@ const router = Router();
  *               properties:
  *                 success:
  *                   type: boolean
+ *                 message:
+ *                   type: string
  *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       name:
- *                         type: string
- *                       code:
- *                         type: string
+ *                   type: object
+ *                   properties:
+ *                     banks:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                           code:
+ *                             type: string
+ *                           slug:
+ *                             type: string
+ *                           country:
+ *                             type: string
+ *                           currency:
+ *                             type: string
+ *                           type:
+ *                             type: string
+ *                           active:
+ *                             type: boolean
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         limit:
+ *                           type: integer
+ *                         offset:
+ *                           type: integer
+ *                         per_page:
+ *                           type: integer
+ *                         cursor_next:
+ *                           type: string
+ *                         cursor_previous:
+ *                           type: string
  */
 router.get('/banks', accountsController.getBanks);
 
@@ -355,9 +404,23 @@ router.post('/add-recipient', authenticate, accountsController.addRecipient);
  *     tags:
  *       - Accounts
  *     summary: Get saved recipients
- *     description: Retrieve all saved bank recipients for the authenticated user
+ *     description: Retrieve saved bank recipients for the authenticated user with pagination support
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of recipients to return (default 10, max 100)
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Number of recipients to skip (for pagination)
  *     responses:
  *       200:
  *         description: Recipients retrieved successfully
@@ -368,19 +431,38 @@ router.post('/add-recipient', authenticate, accountsController.addRecipient);
  *               properties:
  *                 success:
  *                   type: boolean
+ *                 message:
+ *                   type: string
  *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       account_number:
- *                         type: string
- *                       account_name:
- *                         type: string
- *                       bank_code:
- *                         type: string
+ *                   type: object
+ *                   properties:
+ *                     recipients:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           account_number:
+ *                             type: string
+ *                           account_name:
+ *                             type: string
+ *                           bank_code:
+ *                             type: string
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         limit:
+ *                           type: integer
+ *                         offset:
+ *                           type: integer
+ *                         total:
+ *                           type: integer
+ *                         hasMore:
+ *                           type: boolean
  */
 router.get('/recipients', authenticate, accountsController.getRecipients);
 

@@ -7,9 +7,17 @@ import { userService } from '../services/UserService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import { adjutorService } from '../services/AdjutorService';
 import { blacklistService } from '../services/BlacklistService';
-import { logger } from '@/config/logger';
+import { env } from '../config/env';
+import { logger } from '../config/logger';
 
 export class AuthController {
+  /**
+   * Registers a new user after validating the payload and blacklist status.
+   * @param req Request (registration payload)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (registration response)
+   * @throws Error if the registration flow fails
+   */
   async register(req: Request, res: Response) {
     try {
       const { first_name, last_name, email, phone, password } = req.body;
@@ -75,6 +83,13 @@ export class AuthController {
     }
   }
 
+  /**
+   * Authenticates a user and returns a JWT token.
+   * @param req Request (login payload)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (login response)
+   * @throws Error if authentication fails
+   */
   async login(req: Request, res: Response) {
     try {
       const { email, password } = req.body;
@@ -132,6 +147,12 @@ export class AuthController {
     }
   }
 
+  /**
+   * Logs a user out of the API.
+   * @param req Request (current request context)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (logout response)
+   */
   async logout(req: Request, res: Response) {
     // faux logout
     return res.status(StatusCodes.OK).json({
@@ -140,6 +161,13 @@ export class AuthController {
     });
   }
 
+  /**
+   * Returns the authenticated user's profile.
+   * @param req AuthenticatedRequest (request with user context)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (profile response)
+   * @throws Error if the profile lookup fails
+   */
   async profile(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -172,10 +200,21 @@ export class AuthController {
     }
   }
 
+  /**
+   * Checks whether a user is blacklisted using cached records and Adjutor Karma.
+   * @param data any (identity payload containing email and phone)
+   * @returns Promise<{ status: boolean; blacklist: any | null }> (blacklist check result)
+   * @throws Error if the blacklist lookup fails
+   */
   private async isBlacklisted(data: any): Promise<{ status: boolean; blacklist: any | null }> {
     logger.info('Checking blacklist status for:', data);
     try {
       const { email, phone } = data;
+
+      if (env.blacklist.mode === 'disabled') {
+        return { status: false, blacklist: null };
+      }
+
       //check db for existing blacklist
       const existingCheck = await blacklistService.findByEmail(email);
       if (existingCheck) {
@@ -195,8 +234,12 @@ export class AuthController {
       logger.info('No blacklist found for:', data);
       return { status: false, blacklist: null };
     } catch (err) {
-      // If Adjutor API fails, allow registration but log error
       logger.error('Adjutor Karma check failed:', err);
+
+      if (env.blacklist.mode === 'strict') {
+        throw new Error('Unable to verify blacklist status');
+      }
+
       return { status: false, blacklist: null };
     }
   }

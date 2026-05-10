@@ -7,6 +7,12 @@ import { webhookRepository } from '../repositories/WebhookRepository';
 
 export class WebhookService {
 
+    /**
+     * Handles a successful Paystack charge webhook event.
+     * @param event any (Paystack webhook payload)
+     * @returns Promise<void> (processes the webhook side effects)
+     * @throws Error if the transaction update fails
+     */
     async handlePaystackChargeSuccess(event: any) {
         const { reference, amount: amountInKobo } = event.data;
         const amountInNaira = amountInKobo / 100;
@@ -53,6 +59,12 @@ export class WebhookService {
         });
     }
 
+    /**
+     * Handles a successful Paystack transfer webhook event.
+     * @param event any (Paystack webhook payload)
+     * @returns Promise<void> (processes the webhook side effects)
+     * @throws Error if the transaction update fails
+     */
     async handlePaystackTransferSuccess(event: any) {
         const { reference } = event.data;
         // Get the pending transaction
@@ -73,6 +85,12 @@ export class WebhookService {
         });
     }
 
+    /**
+     * Handles a failed Paystack transfer webhook event.
+     * @param event any (Paystack webhook payload)
+     * @returns Promise<void> (processes the webhook side effects)
+     * @throws Error if the transaction update fails
+     */
     async handlePaystackTransferFailed(event: any) {
         const { reference, amount: amountInKobo } = event.data;
         const amountInNaira = amountInKobo / 100;

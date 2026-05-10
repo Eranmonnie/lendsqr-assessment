@@ -4,6 +4,13 @@ import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import { walletService } from '../services/WalletService';
 
 export class WalletController {
+  /**
+   * Creates a wallet for the authenticated user.
+   * @param req AuthenticatedRequest (wallet creation payload)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (wallet creation response)
+   * @throws Error if wallet creation fails
+   */
   async createWallet(req: AuthenticatedRequest, res: Response) {
     try {
       const { pin } = req.body;
@@ -13,6 +20,15 @@ export class WalletController {
         return res.status(StatusCodes.UNAUTHORIZED).json({
           success: false,
           message: 'Unauthorized',
+        });
+      }
+
+      // check if user already has a wallet
+      const existingWallet = await walletService.findByUserId(userId);
+      if (existingWallet) {
+        return res.status(StatusCodes.CONFLICT).json({
+          success: false,
+          message: 'User already has a wallet.',
         });
       }
 
@@ -52,6 +68,13 @@ export class WalletController {
     }
   }
 
+  /**
+   * Retrieves the authenticated user's wallet.
+   * @param req AuthenticatedRequest (current request context)
+   * @param res Response (HTTP response object)
+   * @returns Promise<any> (wallet retrieval response)
+   * @throws Error if wallet lookup fails
+   */
   async getWallet(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.userId;
