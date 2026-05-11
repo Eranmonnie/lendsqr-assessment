@@ -27,6 +27,8 @@ router.use(authenticate);
  *             properties:
  *               pin:
  *                 type: string
+ *           example:
+ *             pin: "1234"
  *     responses:
  *       201:
  *         description: Wallet created successfully
@@ -41,8 +43,27 @@ router.use(authenticate);
  *                   type: string
  *                 data:
  *                   $ref: '#/components/schemas/Wallet'
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   message: "Wallet created successfully"
+ *                   data:
+ *                     id: "660e8400-e29b-41d4-a716-446655440000"
+ *                     user_id: "550e8400-e29b-41d4-a716-446655440000"
+ *                     balance: 0.00
+ *                     status: "ACTIVE"
+ *                     currency: "NGN"
+ *                     created_at: "2026-05-11T10:30:00Z"
  *       400:
  *         description: Wallet already exists or user not found
+ *         content:
+ *           application/json:
+ *             examples:
+ *               walletExists:
+ *                 value:
+ *                   success: false
+ *                   message: "Wallet already exists for this user"
  */
 router.post('/create', walletController.createWallet);
 
@@ -70,8 +91,27 @@ router.post('/create', walletController.createWallet);
  *                   type: string
  *                 data:
  *                   $ref: '#/components/schemas/Wallet'
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   message: "Wallet retrieved successfully"
+ *                   data:
+ *                     id: "660e8400-e29b-41d4-a716-446655440000"
+ *                     user_id: "550e8400-e29b-41d4-a716-446655440000"
+ *                     balance: 50000.00
+ *                     status: "ACTIVE"
+ *                     currency: "NGN"
+ *                     created_at: "2026-05-11T10:30:00Z"
  *       404:
  *         description: Wallet not found
+ *         content:
+ *           application/json:
+ *             examples:
+ *               notFound:
+ *                 value:
+ *                   success: false
+ *                   message: "Wallet not found"
  */
 router.get('/my-wallet', walletController.getWallet);
 

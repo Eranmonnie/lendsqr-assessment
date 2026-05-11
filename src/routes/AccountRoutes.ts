@@ -93,6 +93,35 @@ const router = Router();
  *                           type: string
  *                         cursor_previous:
  *                           type: string
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   message: "Banks retrieved successfully"
+ *                   data:
+ *                     banks:
+ *                       - id: 9
+ *                         name: "First Bank of Nigeria"
+ *                         code: "011"
+ *                         slug: "first-bank"
+ *                         country: "NG"
+ *                         currency: "NGN"
+ *                         type: "nuban"
+ *                         active: true
+ *                       - id: 15
+ *                         name: "Zenith Bank"
+ *                         code: "023"
+ *                         slug: "zenith-bank"
+ *                         country: "NG"
+ *                         currency: "NGN"
+ *                         type: "nuban"
+ *                         active: true
+ *                     pagination:
+ *                       limit: 50
+ *                       offset: 0
+ *                       per_page: 2
+ *                       cursor_next: null
+ *                       cursor_previous: null
  */
 router.get('/banks', accountsController.getBanks);
 
@@ -121,6 +150,9 @@ router.get('/banks', accountsController.getBanks);
  *                 format: decimal
  *               idempotency_key:
  *                 type: string
+ *           example:
+ *             amount: 5000
+ *             idempotency_key: "fund-001"
  *     responses:
  *       200:
  *         description: Funding initiated successfully
@@ -136,8 +168,21 @@ router.get('/banks', accountsController.getBanks);
  *                   properties:
  *                     authorization_url:
  *                       type: string
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     authorization_url: "https://checkout.paystack.com/abc123def456"
  *       400:
  *         description: Invalid amount or duplicate idempotency_key
+ *         content:
+ *           application/json:
+ *             examples:
+ *               duplicateKey:
+ *                 value:
+ *                   success: false
+ *                   message: "Transaction with this idempotency_key already exists"
  */
 router.post('/fund', authenticate, accountsController.fundWallet);
 
@@ -172,6 +217,11 @@ router.post('/fund', authenticate, accountsController.fundWallet);
  *                 type: string
  *               idempotency_key:
  *                 type: string
+ *           example:
+ *             amount: 2000
+ *             pin: "1234"
+ *             account_number: "0123456789"
+ *             idempotency_key: "withdraw-001"
  *     responses:
  *       200:
  *         description: Withdrawal successful
@@ -184,8 +234,26 @@ router.post('/fund', authenticate, accountsController.fundWallet);
  *                   type: boolean
  *                 data:
  *                   $ref: '#/components/schemas/Transaction'
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     id: "770e8400-e29b-41d4-a716-446655440000"
+ *                     type: "WITHDRAWAL"
+ *                     amount: 2000
+ *                     status: "SUCCESS"
+ *                     reference: "withdraw-001"
+ *                     created_at: "2026-05-11T10:35:00Z"
  *       400:
  *         description: Invalid PIN, insufficient funds, or recipient not found
+ *         content:
+ *           application/json:
+ *             examples:
+ *               invalidPin:
+ *                 value:
+ *                   success: false
+ *                   message: "Invalid PIN"
  */
 router.post('/withdraw', authenticate, accountsController.withdrawFunds);
 
@@ -221,6 +289,11 @@ router.post('/withdraw', authenticate, accountsController.withdrawFunds);
  *                 type: string
  *               idempotency_key:
  *                 type: string
+ *           example:
+ *             amount: 1500
+ *             receiver_wallet_id: "660e8400-e29b-41d4-a716-446655440001"
+ *             pin: "1234"
+ *             idempotency_key: "transfer-001"
  *     responses:
  *       200:
  *         description: Transfer successful
@@ -233,8 +306,26 @@ router.post('/withdraw', authenticate, accountsController.withdrawFunds);
  *                   type: boolean
  *                 data:
  *                   $ref: '#/components/schemas/Transaction'
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     id: "780e8400-e29b-41d4-a716-446655440000"
+ *                     type: "TRANSFER"
+ *                     amount: 1500
+ *                     status: "SUCCESS"
+ *                     reference: "transfer-001"
+ *                     created_at: "2026-05-11T10:40:00Z"
  *       400:
  *         description: Invalid PIN, insufficient funds, receiver wallet inactive, or self-transfer is not allowed
+ *         content:
+ *           application/json:
+ *             examples:
+ *               selfTransfer:
+ *                 value:
+ *                   success: false
+ *                   message: "Cannot transfer to the same wallet"
  */
 router.post('/transfer', authenticate, accountsController.walletToWalletTransfer);
 
@@ -262,6 +353,9 @@ router.post('/transfer', authenticate, accountsController.walletToWalletTransfer
  *                 type: string
  *               bank_code:
  *                 type: string
+ *           example:
+ *             account_number: "0123456789"
+ *             bank_code: "058"
  *     responses:
  *       200:
  *         description: Account resolved successfully
@@ -281,8 +375,23 @@ router.post('/transfer', authenticate, accountsController.walletToWalletTransfer
  *                       type: string
  *                     bank_code:
  *                       type: string
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     account_number: "0123456789"
+ *                     account_name: "John Doe"
+ *                     bank_code: "058"
  *       400:
  *         description: Invalid account or bank code
+ *         content:
+ *           application/json:
+ *             examples:
+ *               invalidAccount:
+ *                 value:
+ *                   success: false
+ *                   message: "Invalid account number for the given bank"
  */
 router.post('/bank-enquiry', authenticate, accountsController.bankEnquiry);
 
@@ -308,6 +417,8 @@ router.post('/bank-enquiry', authenticate, accountsController.bankEnquiry);
  *               receiver_wallet_id:
  *                 type: string
  *                 format: uuid
+ *           example:
+ *             receiver_wallet_id: "660e8400-e29b-41d4-a716-446655440001"
  *     responses:
  *       200:
  *         description: Wallet found and active
@@ -342,8 +453,30 @@ router.post('/bank-enquiry', authenticate, accountsController.bankEnquiry);
  *                           type: string
  *                         is_active:
  *                           type: boolean
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     id: "660e8400-e29b-41d4-a716-446655440001"
+ *                     status: "ACTIVE"
+ *                     currency: "NGN"
+ *                     user:
+ *                       id: "550e8400-e29b-41d4-a716-446655440001"
+ *                       first_name: "Jane"
+ *                       last_name: "Smith"
+ *                       email: "jane@example.com"
+ *                       phone: "08098765432"
+ *                       is_active: true
  *       404:
  *         description: Wallet not found
+ *         content:
+ *           application/json:
+ *             examples:
+ *               notFound:
+ *                 value:
+ *                   success: false
+ *                   message: "Wallet not found"
  */
 router.post('/wallet-enquiry', authenticate, accountsController.walletEnquiry);
 
@@ -371,6 +504,9 @@ router.post('/wallet-enquiry', authenticate, accountsController.walletEnquiry);
  *                 type: string
  *               bank_code:
  *                 type: string
+ *           example:
+ *             account_number: "0123456789"
+ *             bank_code: "058"
  *     responses:
  *       201:
  *         description: Recipient added successfully
@@ -392,8 +528,24 @@ router.post('/wallet-enquiry', authenticate, accountsController.walletEnquiry);
  *                       type: string
  *                     bank_code:
  *                       type: string
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     id: "890e8400-e29b-41d4-a716-446655440000"
+ *                     account_number: "0123456789"
+ *                     account_name: "John Doe"
+ *                     bank_code: "058"
  *       400:
  *         description: Invalid account or recipient already exists
+ *         content:
+ *           application/json:
+ *             examples:
+ *               recipientExists:
+ *                 value:
+ *                   success: false
+ *                   message: "Recipient already exists"
  */
 router.post('/add-recipient', authenticate, accountsController.addRecipient);
 
@@ -463,6 +615,28 @@ router.post('/add-recipient', authenticate, accountsController.addRecipient);
  *                           type: integer
  *                         hasMore:
  *                           type: boolean
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   message: "Recipients retrieved successfully"
+ *                   data:
+ *                     recipients:
+ *                       - id: "890e8400-e29b-41d4-a716-446655440000"
+ *                         account_number: "0123456789"
+ *                         account_name: "John Doe"
+ *                         bank_code: "058"
+ *                         created_at: "2026-05-11T10:45:00Z"
+ *                       - id: "890e8400-e29b-41d4-a716-446655440001"
+ *                         account_number: "9876543210"
+ *                         account_name: "Jane Smith"
+ *                         bank_code: "044"
+ *                         created_at: "2026-05-11T10:50:00Z"
+ *                     pagination:
+ *                       limit: 10
+ *                       offset: 0
+ *                       total: 2
+ *                       hasMore: false
  */
 router.get('/recipients', authenticate, accountsController.getRecipients);
 

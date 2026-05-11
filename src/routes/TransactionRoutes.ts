@@ -95,6 +95,34 @@ router.use(authenticate);
  *                           type: integer
  *                         hasMore:
  *                           type: boolean
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   message: "Transactions retrieved successfully"
+ *                   data:
+ *                     transactions:
+ *                       - id: "770e8400-e29b-41d4-a716-446655440000"
+ *                         type: "FUND"
+ *                         amount: 5000
+ *                         reference: "fund-001"
+ *                         status: "SUCCESS"
+ *                         classification: "CREDIT"
+ *                         direction: "FUNDED"
+ *                         created_at: "2026-05-11T10:30:00Z"
+ *                       - id: "780e8400-e29b-41d4-a716-446655440000"
+ *                         type: "TRANSFER"
+ *                         amount: 1500
+ *                         reference: "transfer-001"
+ *                         status: "SUCCESS"
+ *                         classification: "DEBIT"
+ *                         direction: "SENT"
+ *                         created_at: "2026-05-11T10:40:00Z"
+ *                     pagination:
+ *                       limit: 10
+ *                       offset: 0
+ *                       total: 2
+ *                       hasMore: false
  *       401:
  *         description: Unauthorized
  */
@@ -141,6 +169,19 @@ router.get("/", transactionController.getMyTransactions.bind(transactionControll
  *                           type: integer
  *                     netBalance:
  *                       type: number
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   message: "Summary retrieved successfully"
+ *                   data:
+ *                     credits:
+ *                       total: 8500
+ *                       count: 3
+ *                     debits:
+ *                       total: 3000
+ *                       count: 2
+ *                     netBalance: 5500
  */
 router.get(
   "/summary",
@@ -167,10 +208,41 @@ router.get(
  *     responses:
  *       200:
  *         description: Transaction retrieved successfully
+ *         content:
+ *           application/json:
+ *             examples:
+ *               success:
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     id: "770e8400-e29b-41d4-a716-446655440000"
+ *                     type: "TRANSFER"
+ *                     amount: 1500
+ *                     reference: "transfer-001"
+ *                     status: "SUCCESS"
+ *                     classification: "DEBIT"
+ *                     direction: "SENT"
+ *                     sender_wallet_id: "660e8400-e29b-41d4-a716-446655440000"
+ *                     receiver_wallet_id: "660e8400-e29b-41d4-a716-446655440001"
+ *                     created_at: "2026-05-11T10:40:00Z"
  *       404:
  *         description: Transaction not found
+ *         content:
+ *           application/json:
+ *             examples:
+ *               notFound:
+ *                 value:
+ *                   success: false
+ *                   message: "Transaction not found"
  *       403:
  *         description: Access denied - transaction doesn't belong to you
+ *         content:
+ *           application/json:
+ *             examples:
+ *               accessDenied:
+ *                 value:
+ *                   success: false
+ *                   message: "Access denied"
  */
 router.get(
   "/:transactionId",
