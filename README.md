@@ -6,8 +6,8 @@ Demo Credit allows users to create accounts, fund wallets, transfer funds to
 other users, and withdraw to bank accounts — with Adjutor Karma blacklist 
 verification on onboarding and Paystack-powered payment processing.
 
-- **Live API:** https://lendsqr-assessment-8yra.onrender.com
-- **API Docs:** https://lendsqr-assessment-8yra.onrender.com/api-docs
+- **Live API:** https://ajala-feranmi-lendsqr-be-test.onrender.com/
+- **API Docs:** https://ajala-feranmi-lendsqr-be-test.onrender.com//api-docs
 - **Design Document:** https://www.notion.so/Lendsqr-Backend-Engineer-Assessment-Ajala-Oluwaferanmi-35c9466ef8c580f59e22c108b946c209?source=copy_link
 
 ## Table of Contents
