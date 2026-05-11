@@ -10,6 +10,16 @@ verification on onboarding and Paystack-powered payment processing.
 - **API Docs:** https://lendsqr-assessment-8yra.onrender.com/api-docs
 - **Design Document:** https://www.notion.so/Lendsqr-Backend-Engineer-Assessment-Ajala-Oluwaferanmi-35c9466ef8c580f59e22c108b946c209?source=copy_link
 
+## Table of Contents
+
+- [Stack](#stack)
+- [Entity Relationship Diagram](#entity-relationship-diagram)
+- [Local Setup](#local-setup)
+- [Environment Variables](#environment-variables)
+- [API Reference](#api-reference)
+- [Running Tests](#running-tests)
+- [Scripts](#scripts)
+
 ---
 
 ## Stack
